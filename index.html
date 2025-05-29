@@ -54,13 +54,23 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2.5rem; /* Taille du symbole X/O */
+            font-size: 2rem; /* Taille du symbole X/O par défaut (mobile) */
             font-weight: bold;
             cursor: pointer;
             border: 1px solid #e0e0e0; /* Bordure de cellule plus claire */
             transition: background-color 0.2s ease-in-out;
             color: #1A2B3C; /* Couleur par default du texte (sombre du thème) */
             user-select: none; /* Empêche la sélection du texte */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .cell {
+                font-size: 2.5rem;
+            }
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .cell {
+                font-size: 3rem; /* Plus grand pour les écrans de bureau */
+            }
         }
 
         .cell:hover {
@@ -469,7 +479,7 @@
             <div id="local-board" class="board-grid">
                 </div>
 
-            <div class="mt-8 flex space-x-4">
+            <div class="mt-8 flex flex-wrap justify-center gap-4">
                 <button id="local-reset-button" class="game-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004 13v-1m7-7h.582m15.356 2A8.001 8.001 0 004 13v-1" />
@@ -490,7 +500,7 @@
             <p class="text-center text-gray-600 mb-6 italic">
                 Les parties jouées contre l'IA en mode Facile et Moyen n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.). Seules les parties en mode Difficile sont prises en compte.
             </p>
-            <div id="ai-difficulty-buttons" class="flex space-x-4 mb-8">
+            <div id="ai-difficulty-buttons" class="flex flex-wrap justify-center gap-4 mb-8">
                 <button id="easy-button" class="game-button">Facile</button>
                 <button id="medium-button" class="game-button">Moyen</button>
                 <button id="hard-button" class="game-button">Difficile</button>
@@ -500,7 +510,7 @@
             <div id="ai-board" class="board-grid">
                 </div>
 
-            <div class="mt-8 flex space-x-4">
+            <div class="mt-8 flex flex-wrap justify-center gap-4">
                 <button id="ai-reset-button" class="game-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004 13v-1m7-7h.582m15.356 2A8.001 8.001 0 004 13v-1" />
@@ -546,7 +556,7 @@
 
             <div id="online-board" class="board-grid"></div>
 
-            <div class="mt-8 flex space-x-4">
+            <div class="mt-8 flex flex-wrap justify-center gap-4">
                 <button id="online-leave-game-button" class="game-button bg-red-600 hover:bg-red-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
