@@ -37,8 +37,10 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr); /* 5 colonnes de taille égale */
             grid-template-rows: repeat(5, 1fr);    /* 5 lignes de taille égale */
-            width: 400px; /* Largeur fixe pour le plateau */
-            height: 400px; /* Hauteur fixe pour le plateau */
+            width: 90vw; /* Largeur fluide basée sur la largeur du viewport */
+            height: 90vw; /* Hauteur fluide pour maintenir le ratio */
+            max-width: 400px; /* Largeur maximale pour les grands écrans */
+            max-height: 400px; /* Hauteur maximale pour les grands écrans */
             border: 2px solid #1A2B3C; /* Bordure foncée du thème */
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée */
             border-radius: 0.75rem; /* Coins arrondis */
@@ -194,15 +196,36 @@
         }
 
         .game-end-banner h2 {
-            font-size: 3rem; /* Adjusted font size */
+            font-size: 2.5rem; /* Adjusted font size */
             font-weight: bold;
             color: #FFD700; /* Yellow accent */
             margin-bottom: 0.5rem;
         }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .game-end-banner h2 {
+                font-size: 3rem;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .game-end-banner h2 {
+                font-size: 4rem;
+            }
+        }
+
 
         .game-end-banner p {
-            font-size: 1.8rem; /* Adjusted font size */
+            font-size: 1.25rem; /* Adjusted font size */
             margin-bottom: 1rem;
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .game-end-banner p {
+                font-size: 1.5rem;
+            }
+        }
+        @media (min-width: 1024px) { /* lg breakpoint */
+            .game-end-banner p {
+                font-size: 1.8rem;
+            }
         }
 
         .game-end-banner .button-group {
@@ -402,12 +425,15 @@
                         <span id="profile-games-played" class="font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
+                        <span class="font-semibold">Victoires :</span>
                         <span id="profile-wins" class="text-green-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
+                        <span class="font-semibold">Défaites :</span>
                         <span id="profile-losses" class="text-red-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
+                        <span class="font-semibold">Nuls :</span>
                         <span id="profile-draws" class="text-gray-500 font-medium"></span>
                     </p>
                 </div>
@@ -534,8 +560,8 @@
 
     <div id="game-end-overlay" class="game-end-overlay hidden">
         <div id="game-end-banner" class="game-end-banner hidden">
-            <h2 id="game-end-title"></h2>
-            <p id="game-end-message"></p>
+            <h2 id="game-end-title" class="text-2xl sm:text-3xl lg:text-4xl"></h2>
+            <p id="game-end-message" class="text-lg sm:text-xl lg:text-2xl"></p>
             <div class="button-group">
                 <button id="game-end-replay-button" class="game-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
