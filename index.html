@@ -163,8 +163,8 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Styles pour l'écran de fin de partie */
-        .game-end-screen {
+        /* Styles for the NEW game end overlay (banner) */
+        .game-end-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -174,54 +174,42 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
-            z-index: 999;
+            z-index: 998; /* Below message box, above game */
+            background-color: transparent; /* Initially transparent */
+        }
+
+        .game-end-banner {
+            background-color: rgba(26, 43, 60, 0.8); /* Semi-transparent dark blue */
+            color: white;
+            padding: 1.5rem 3rem; /* Increased padding */
+            border-radius: 0.75rem;
             text-align: center;
-            gap: 2rem;
-        }
-
-        /* Couleurs du thème OXO Arena pour les écrans de fin de partie */
-        .game-end-screen.win {
-            background-color: #1A2B3C; /* Couleur principale du thème (bleu foncé) */
-            color: #FFD700; /* Couleur d'accent (jaune doré) */
-        }
-        .game-end-screen.loss {
-            background-color: #600000; /* Rouge foncé plus discret */
-            color: #E5E7EB; /* Gris clair pour le texte */
-        }
-        .game-end-screen.draw {
-            background-color: #4B5563; /* Gris foncé de Tailwind */
-            color: #E5E7EB; /* Gris clair pour le texte */
-        }
-
-        .game-end-screen h2 {
-            font-size: 4rem; /* Grande taille pour le titre */
-            font-weight: bold;
-            margin-bottom: 1rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .game-end-screen p {
-            font-size: 2rem; /* Taille pour le message */
-            margin-bottom: 2rem;
-        }
-
-        .game-end-screen .icon {
-            /* L'icône est maintenant vide ou gérée par le texte, donc pas de taille spécifique */
-            font-size: 0; /* Cache l'icône si elle est vide */
-            margin-bottom: 0;
-            line-height: 0;
-        }
-
-        .game-end-screen .button-group {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); /* Stronger shadow */
+            max-width: 90%; /* Allow more width */
             display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem; /* Increased gap */
+            pointer-events: auto; /* Allow clicks on buttons within the banner */
         }
 
-        .game-end-screen .game-button {
-            min-width: 200px; /* Assure une largeur minimale pour les boutons */
+        .game-end-banner h2 {
+            font-size: 3rem; /* Adjusted font size */
+            font-weight: bold;
+            color: #FFD700; /* Yellow accent */
+            margin-bottom: 0.5rem;
+        }
+
+        .game-end-banner p {
+            font-size: 1.8rem; /* Adjusted font size */
+            margin-bottom: 1rem;
+        }
+
+        .game-end-banner .button-group {
+            display: flex;
+            gap: 1.5rem; /* Increased gap */
+            justify-content: center;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
         }
 
         /* Styles spécifiques pour le classement */
@@ -294,6 +282,51 @@
         }
         #games-history-list::-webkit-scrollbar-thumb:hover {
             background: #555;
+        }
+
+        /* Styles for game history detail screen */
+        .history-detail-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .history-detail-info {
+            width: 100%;
+            background-color: #f8f8f8;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .history-detail-info p {
+            margin-bottom: 0.5rem;
+        }
+        .history-detail-info p span {
+            font-weight: 600;
+        }
+
+        .history-detail-board-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .history-detail-board-controls button {
+            background-color: #1A2B3C;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .history-detail-board-controls button:hover {
+            background-color: #334a60;
+        }
+        .history-detail-board-controls button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -369,15 +402,12 @@
                         <span id="profile-games-played" class="font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Victoires :</span>
                         <span id="profile-wins" class="text-green-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Défaites :</span>
                         <span id="profile-losses" class="text-red-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Nuls :</span>
                         <span id="profile-draws" class="text-gray-500 font-medium"></span>
                     </p>
                 </div>
@@ -502,24 +532,32 @@
 
     </div>
 
-    <div id="game-end-screen" class="game-end-screen hidden">
-        <div id="game-end-icon" class="icon"></div>
-        <h2 id="game-end-title"></h2>
-        <p id="game-end-message"></p>
-        <div class="button-group">
-            <button id="game-end-replay-button" class="game-button">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004 13v-1m7-7h.582m15.356 2A8.001 8.001 0 004 13v-1" />
-                </svg>
-                <span>Rejouer</span>
-            </button>
-            <button id="game-end-home-button" class="game-button">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-                </svg>
-                <span>Retour à l'Accueil</span>
-            </button>
+    <div id="game-end-overlay" class="game-end-overlay hidden">
+        <div id="game-end-banner" class="game-end-banner hidden">
+            <h2 id="game-end-title"></h2>
+            <p id="game-end-message"></p>
+            <div class="button-group">
+                <button id="game-end-replay-button" class="game-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004 13v-1m7-7h.582m15.356 2A8.001 8.001 0 004 13v-1" />
+                    </svg>
+                    <span>Rejouer</span>
+                </button>
+                <button id="game-end-home-button" class="game-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                    </svg>
+                    <span>Retour à l'Accueil</span>
+                </button>
+            </div>
         </div>
+    </div>
+
+
+    <div id="message-box-overlay" class="message-box-overlay hidden"></div>
+    <div id="message-box" class="message-box hidden">
+        <p id="message-box-text" class="text-xl font-semibold text-[#1A2B3C]"></p>
+        <button id="message-box-close" class="game-button">OK</button>
     </div>
 
     <div id="history-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full mt-8 text-[#1A2B3C]">
@@ -534,18 +572,45 @@
         </button>
     </div>
 
-
-    <div id="message-box-overlay" class="message-box-overlay hidden"></div>
-    <div id="message-box" class="message-box hidden">
-        <p id="message-box-text" class="text-xl font-semibold text-[#1A2B3C]"></p>
-        <button id="message-box-close" class="game-button">OK</button>
+    <div id="history-detail-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full mt-8 text-[#1A2B3C]">
+        <h1 class="text-4xl font-extrabold mb-6 text-center">Détails de la Partie</h1>
+        <div class="history-detail-container">
+            <div id="detail-game-info" class="history-detail-info">
+                <p>Mode: <span id="detail-mode"></span></p>
+                <p>Date: <span id="detail-date"></span></p>
+                <p>Adversaire: <span id="detail-opponent"></span></p>
+                <p>Statut: <span id="detail-status"></span></p>
+            </div>
+            <div id="detail-board" class="board-grid">
+                </div>
+            <div class="history-detail-board-controls">
+                <button id="prev-move-button" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+                    </svg>
+                </button>
+                <span id="move-counter">Coup 0/0</span>
+                <button id="next-move-button" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <button id="detail-back-button" class="game-button mt-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+            </svg>
+            <span>Retour à l'Historique</span>
+        </button>
     </div>
+
 
     <script type="module">
         // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Firebase Initialization ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'oxoarena';
@@ -582,6 +647,7 @@
         let onlineGameListenerUnsubscribe = null;
         let onlineOpponentUserId = null; // Store opponent's user ID
         let onlineOpponentProfile = null; // Store opponent's profile data
+        // Removed gameSavedToHistoryForThisGameId as it's now handled robustly in saveGameToHistory
 
         if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
             app = initializeApp(firebaseConfig);
@@ -610,7 +676,12 @@
                         }
                     } catch (error) {
                         console.error("Firebase: Authentication error:", error);
-                        showMessage("Erreur de connexion Firebase: " + error.message);
+                        // Suppress specific permission error message if it doesn't break functionality
+                        if (error.code !== 'permission-denied') {
+                            showMessage("Erreur de connexion Firebase: " + error.message);
+                        } else {
+                            console.warn("Firebase: Erreur de permission lors de l'authentification/profil, mais le jeu peut continuer.");
+                        }
                     }
                     isAuthReady = true;
                     // Ensure profile content is visible even if not logged in (e.g., showing N/A)
@@ -715,7 +786,12 @@
                 return profileData;
             } catch (error) {
                 console.error("Firebase: Erreur lors de la récupération ou la création du profil utilisateur :", error);
-                showMessage("Erreur lors du chargement du profil: " + error.message);
+                // Suppress specific permission error message if it doesn't break functionality
+                if (error.code !== 'permission-denied') {
+                    showMessage("Erreur lors du chargement du profil: " + error.message);
+                } else {
+                    console.warn("Firebase: Erreur de permission lors de la récupération/création du profil, mais le jeu peut continuer.");
+                }
                 return { ...defaultUserProfile };
             }
         }
@@ -937,16 +1013,23 @@
         const aiGameScreen = document.getElementById('ai-game-screen');
         const onlineSearchingScreen = document.getElementById('online-searching-screen');
         const onlineGameScreen = document.getElementById('online-game-screen');
-        const gameEndScreen = document.getElementById('game-end-screen');
+        const gameEndOverlay = document.getElementById('game-end-overlay'); // New overlay container
+        const gameEndBanner = document.getElementById('game-end-banner'); // The actual banner
         const gameEndTitle = document.getElementById('game-end-title');
         const gameEndMessage = document.getElementById('game-end-message');
-        const gameEndIcon = document.getElementById('game-end-icon');
         const gameEndReplayButton = document.getElementById('game-end-replay-button');
         const gameEndHomeButton = document.getElementById('game-end-home-button');
         const leaderboardScreen = document.getElementById('leaderboard-screen'); // Nouvelle référence
         const leaderboardList = document.getElementById('leaderboard-list'); // Nouvelle référence
         const historyScreen = document.getElementById('history-screen'); // Nouvelle référence pour l'historique
         const gamesHistoryList = document.getElementById('games-history-list'); // Liste des parties de l'historique
+        const historyDetailScreen = document.getElementById('history-detail-screen'); // New detail screen
+        const detailGameInfo = document.getElementById('detail-game-info');
+        const detailBoardElement = document.getElementById('detail-board');
+        const prevMoveButton = document.getElementById('prev-move-button');
+        const nextMoveButton = document.getElementById('next-move-button');
+        const moveCounter = document.getElementById('move-counter');
+        const detailBackButton = document.getElementById('detail-back-button');
 
 
         const playOnlineButton = document.getElementById('playOnlineButton');
@@ -968,6 +1051,7 @@
         let localCurrentPlayer = 'X';
         let localGameActive = true;
         let localCells;
+        let localMovesHistory = []; // To store moves for history replay
 
         // --- Variables et éléments du DOM pour le jeu IA ---
         const aiStatusDisplay = document.getElementById('ai-game-status');
@@ -987,6 +1071,7 @@
         let aiDifficulty = null;
         const MINIMAX_MAX_DEPTH = 4;
         let aiCells;
+        let aiMovesHistory = []; // To store moves for history replay
 
         // --- Constantes de jeu communes ---
         const BOARD_SIZE = 5;
@@ -1048,6 +1133,8 @@
                 aiCells = Array.from(document.querySelectorAll('#ai-board .cell'));
             } else if (boardElementId === 'online-board') {
                 onlineCells = Array.from(document.querySelectorAll('#online-board .cell'));
+            } else if (boardElementId === 'detail-board') {
+                // No specific cells array for detail board, it's temporary
             }
         };
 
@@ -1078,12 +1165,18 @@
         const playerXMarker = 'X'; // Assuming 'X' is always "my" player or Player 1 for history context
 
 
-        function showGameEndScreen(status, winner, gameType, finalBoardState) {
-            hideAllScreens();
-            gameEndScreen.classList.remove('hidden', 'win', 'loss', 'draw');
+        function showGameEndScreen(status, winner, gameType, finalBoardState, movesHistory) {
+            // Hide all game screens, but not home/leaderboard/history
+            localGameScreen.classList.add('hidden');
+            aiGameScreen.classList.add('hidden');
+            onlineGameScreen.classList.add('hidden');
+            onlineSearchingScreen.classList.add('hidden');
+
+            gameEndOverlay.classList.remove('hidden'); // Show the overlay
+            gameEndBanner.classList.remove('hidden'); // Show the banner
+
             gameEndTitle.textContent = '';
             gameEndMessage.textContent = '';
-            gameEndIcon.innerHTML = ''; // Clear any previous icon
             currentEndGameType = gameType; // Stocke le type de jeu pour les boutons
 
             let title = '';
@@ -1091,7 +1184,6 @@
             let historyStatus = ''; // Status to save to history
 
             if (gameType === 'local') {
-                gameEndScreen.classList.add('draw'); // Couleur neutre pour local (pas de victoire/défaite absolue)
                 if (status === 'win') {
                     title = 'PARTIE TERMINÉE !';
                     message = `Le joueur ${winner} a gagné !`;
@@ -1102,46 +1194,53 @@
                     historyStatus = 'draw';
                 }
                 currentOpponentName = 'Joueur Local'; // Set opponent for history
-            } else { // AI or Online
+            } else if (gameType === 'ai') {
                 if (status === 'win') {
-                    gameEndScreen.classList.add('win');
                     title = 'VICTOIRE !';
-                    message = `Vous avez gagné en tant que joueur ${winner} !`;
+                    message = `Vous avez gagné !`;
                     historyStatus = 'won';
                 } else if (status === 'loss') {
-                    gameEndScreen.classList.add('loss');
                     title = 'DÉFAITE !';
-                    message = `Le joueur ${winner} a gagné.`;
+                    message = `L'IA a gagné.`;
                     historyStatus = 'lost';
                 } else { // draw
-                    gameEndScreen.classList.add('draw');
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
                     historyStatus = 'draw';
                 }
-
-                // Update profile stats for AI (hard) and Online games
-                if (isAuthReady && currentUserId) {
-                    if (gameType === 'ai' && aiDifficulty === 'hard') {
-                        updateUserProfileStats(currentUserId, status);
-                        currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`; // Set opponent for history
-                    } else if (gameType === 'online' && onlineOpponentProfile) {
-                        updateUserProfileStats(currentUserId, status, onlineOpponentProfile.elo);
-                        currentOpponentName = onlineOpponentProfile.username || 'Joueur en ligne'; // Set opponent for history
-                    } else if (gameType === 'ai') { // Easy/Medium AI, no stats update, but still save to history
-                        currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`;
-                    }
+                currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`; // Set opponent for history
+            } else if (gameType === 'online') {
+                if (status === 'win') {
+                    title = 'VICTOIRE !';
+                    message = `Vous avez gagné !`;
+                    historyStatus = 'won';
+                } else if (status === 'loss') {
+                    title = 'DÉFAITE !';
+                    message = `${onlineOpponentProfile ? onlineOpponentProfile.username : 'Votre adversaire'} a gagné.`;
+                    historyStatus = 'lost';
+                } else { // draw
+                    title = 'MATCH NUL !';
+                    message = 'Aucun vainqueur.';
+                    historyStatus = 'draw';
                 }
+                currentOpponentName = onlineOpponentProfile ? onlineOpponentProfile.username : 'Joueur en ligne'; // Set opponent for history
             }
 
             gameEndTitle.textContent = title;
             gameEndMessage.textContent = message;
 
-            gameEndReplayButton.style.display = 'flex';
-            gameEndHomeButton.style.display = 'flex';
+            // Update profile stats for AI (hard) and Online games
+            if (isAuthReady && currentUserId) {
+                if (gameType === 'ai' && aiDifficulty === 'hard') {
+                    updateUserProfileStats(currentUserId, status);
+                } else if (gameType === 'online') {
+                    updateUserProfileStats(currentUserId, status, onlineOpponentProfile ? onlineOpponentProfile.elo : null);
+                }
+            }
 
             // Save game to history
-            saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, BOARD_SIZE);
+            // For online games, the movesHistory passed here should already be complete due to getDoc in onSnapshot
+            saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, movesHistory, BOARD_SIZE, currentOnlineGameId);
         }
 
         // --- Fonctions spécifiques au jeu local ---
@@ -1155,17 +1254,18 @@
             localBoard[clickedCellIndex] = localCurrentPlayer;
             localCells[clickedCellIndex].innerHTML = localCurrentPlayer;
             localCells[clickedCellIndex].classList.add(localCurrentPlayer.toLowerCase());
+            localMovesHistory.push({ index: clickedCellIndex, player: localCurrentPlayer }); // Record the move
 
             const hasWon = checkForWin(localCurrentPlayer, localBoard);
             if (hasWon) {
-                showGameEndScreen('win', localCurrentPlayer, 'local', [...localBoard]);
+                showGameEndScreen('win', localCurrentPlayer, 'local', [...localBoard], [...localMovesHistory]);
                 localGameActive = false;
                 return;
             }
 
             const hasDraw = checkForDraw(localBoard);
             if (hasDraw) {
-                showGameEndScreen('draw', null, 'local', [...localBoard]);
+                showGameEndScreen('draw', null, 'local', [...localBoard], [...localMovesHistory]);
                 localGameActive = false;
                 return;
             }
@@ -1178,12 +1278,13 @@
             localBoard = Array(25).fill('');
             localCurrentPlayer = 'X';
             localGameActive = true;
+            localMovesHistory = []; // Reset moves history
             updateStatus(`Au tour de : ${localCurrentPlayer}`, 'local');
             localCells.forEach(cell => {
                 cell.innerHTML = '';
                 cell.classList.remove('x', 'o');
             });
-            hideAllScreens();
+            // Ensure the board is visible again if coming from game end screen
             localGameScreen.classList.remove('hidden');
         };
 
@@ -1206,6 +1307,7 @@
             }
 
             makeAIMoveInternal(clickedCellIndex, humanPlayer);
+            aiMovesHistory.push({ index: clickedCellIndex, player: humanPlayer }); // Record the move
             checkAIGameStatus();
         };
 
@@ -1221,13 +1323,13 @@
             const isDraw = checkForDraw(aiBoard);
 
             if (humanWon) {
-                showGameEndScreen('win', humanPlayer, 'ai', [...aiBoard]);
+                showGameEndScreen('win', humanPlayer, 'ai', [...aiBoard], [...aiMovesHistory]);
                 aiGameActive = false;
             } else if (aiWon) {
-                showGameEndScreen('loss', aiPlayer, 'ai', [...aiBoard]);
+                showGameEndScreen('loss', aiPlayer, 'ai', [...aiBoard], [...aiMovesHistory]);
                 aiGameActive = false;
             } else if (isDraw) {
-                showGameEndScreen('draw', null, 'ai', [...aiBoard]);
+                showGameEndScreen('draw', null, 'ai', [...aiBoard], [...aiMovesHistory]);
                 aiGameActive = false;
             } else {
                 aiCurrentPlayer = aiCurrentPlayer === humanPlayer ? aiPlayer : humanPlayer;
@@ -1490,6 +1592,7 @@
 
             if (move !== null) {
                 makeAIMoveInternal(move, aiPlayer);
+                aiMovesHistory.push({ index: move, player: aiPlayer }); // Record the move
                 checkAIGameStatus();
             }
         };
@@ -1498,12 +1601,13 @@
             aiBoard = Array(25).fill('');
             aiCurrentPlayer = humanPlayer;
             aiGameActive = true;
+            aiMovesHistory = []; // Reset moves history
             updateStatus(`Au tour de : ${aiCurrentPlayer}`, 'ai');
             aiCells.forEach(cell => {
                 cell.innerHTML = '';
                 cell.classList.remove('x', 'o');
             });
-            hideAllScreens();
+            // Ensure the board is visible again if coming from game end screen
             aiGameScreen.classList.remove('hidden');
             // Re-select difficulty button visually
             if (aiDifficulty) {
@@ -1575,7 +1679,8 @@
                         status: 'active',
                         winner: null,
                         createdAt: serverTimestamp(),
-                        lastMoveTime: serverTimestamp()
+                        lastMoveTime: serverTimestamp(),
+                        moves: [] // Initialize moves array for replay
                     });
 
                     await updateDoc(foundOpponentDocRef, {
@@ -1686,10 +1791,11 @@
             resetOnlineBoardUI();
 
             const gameRef = doc(db, 'games', gameId);
-            onlineGameListenerUnsubscribe = onSnapshot(gameRef, (docSnap) => {
+            onlineGameListenerUnsubscribe = onSnapshot(gameRef, async (docSnap) => { // Make async
                 if (docSnap.exists()) {
                     const gameData = docSnap.data();
                     console.log("Online game update received:", gameData);
+                    console.log("Received gameData.moves:", gameData.moves); // Log all moves received from Firestore
                     console.log("Current User ID (in listener):", currentUserId);
                     console.log("Current Player Role (in listener):", currentOnlinePlayerRole);
 
@@ -1706,27 +1812,31 @@
                         }
                     }
 
-                    if (gameData.status === 'finished') {
+                    if (gameData.status === 'finished' || gameData.status === 'abandoned') {
                         onlineGameActive = false;
+                        // Unsubscribe immediately to prevent further updates
+                        if (onlineGameListenerUnsubscribe) {
+                            onlineGameListenerUnsubscribe();
+                            onlineGameListenerUnsubscribe = null;
+                        }
+
+                        // Fetch the final game document to ensure we have the complete moves array
+                        // This is crucial for history replay.
+                        const finalGameDocSnap = await getDoc(gameRef);
+                        const finalGameData = finalGameDocSnap.exists() ? finalGameDocSnap.data() : gameData; // Fallback to current gameData
+
+                        let statusToShow = '';
                         if (gameData.winner === currentOnlinePlayerRole) {
-                            showGameEndScreen('win', currentOnlinePlayerRole, 'online', [...onlineBoard]);
+                            statusToShow = 'win';
                         } else if (gameData.winner === 'draw') {
-                            showGameEndScreen('draw', null, 'online', [...onlineBoard]);
-                        } else { // Opponent won
-                            showGameEndScreen('loss', gameData.winner, 'online', [...onlineBoard]);
+                            statusToShow = 'draw';
+                        } else { // Opponent won or game abandoned by opponent
+                            statusToShow = 'loss';
                         }
-                    } else if (gameData.status === 'abandoned') {
-                        onlineGameActive = false;
-                        if (gameData.winner === currentOnlinePlayerRole) {
-                             // This means opponent abandoned and we "won" by default
-                            showGameEndScreen('win', currentOnlinePlayerRole, 'online', [...onlineBoard]);
-                        } else {
-                            // This scenario ideally shouldn't happen if the winner is set to the other player on abandon
-                            // but as a fallback, treat it as a loss or neutral if opponent's UID is our current role
-                            showGameEndScreen('draw', null, 'online', [...onlineBoard]); // Or loss if winner is explicitly other player
-                        }
-                    }
-                    else {
+
+                        showGameEndScreen(statusToShow, gameData.winner, 'online', [...finalGameData.board], finalGameData.moves);
+
+                    } else {
                         updateStatus(`Au tour de : ${onlineCurrentTurn}`, 'online');
                     }
 
@@ -1775,7 +1885,8 @@
                     currentPlayer: nextPlayer,
                     status: gameStatus,
                     winner: winner,
-                    lastMoveTime: serverTimestamp()
+                    lastMoveTime: serverTimestamp(),
+                    moves: arrayUnion({ index: clickedCellIndex, player: currentOnlinePlayerRole }) // Add move to history
                 });
                 console.log("Firestore mis à jour avec le mouvement.");
             } catch (error) {
@@ -1937,18 +2048,32 @@
          * @param {string} finalStatus - 'won', 'lost', 'draw' (from perspective of player X)
          * @param {string} opponent - Name of the opponent (e.g., 'IA Facile', 'Joueur Local', 'Joueur en ligne')
          * @param {Array<string|null>} finalBoardState - The final state of the board
+         * @param {Array<{index: number, player: string}>} movesHistory - Array of moves for replay
          * @param {number} boardSize - The size of the board (currently always 5)
+         * @param {string|null} gameId - The ID of the online game, or null for local/AI
          */
-        function saveGameToHistory(mode, finalStatus, opponent, finalBoardState, boardSize) {
+        function saveGameToHistory(mode, finalStatus, opponent, finalBoardState, movesHistory, boardSize, gameId = null) {
             let history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+
+            // Check for existing online game entry to prevent duplicates
+            // For online games, use the unique gameId to prevent saving duplicates
+            if (gameId) {
+                if (history.some(game => game.gameId === gameId)) {
+                    console.log(`Partie en ligne ${gameId} déjà sauvegardée dans l'historique local. Ignoré.`);
+                    return;
+                }
+            }
+
             const newGame = {
-                id: Date.now().toString(), // Simple unique ID
+                id: gameId || Date.now().toString(), // Use gameId if available, otherwise timestamp
                 mode: mode,
                 date: new Date().toLocaleString(),
                 opponent: opponent,
                 status: finalStatus, // 'won', 'lost', 'draw'
                 finalBoard: finalBoardState,
-                boardSize: boardSize
+                moves: movesHistory, // Store the full moves history
+                boardSize: boardSize,
+                gameId: gameId // Store gameId for online games
             };
             history.unshift(newGame); // Add to the beginning (most recent first)
             history = history.slice(0, MAX_HISTORY_ITEMS); // Keep only the last 10
@@ -1973,7 +2098,11 @@
 
             history.forEach(game => {
                 const gameItem = document.createElement('div');
-                gameItem.className = 'bg-gray-50 p-4 rounded-lg shadow flex flex-col items-start space-y-2';
+                gameItem.className = 'bg-gray-50 p-4 rounded-lg shadow flex flex-col items-start space-y-2 cursor-pointer hover:bg-gray-100 transition-colors';
+                gameItem.dataset.gameId = game.id; // Store game ID for click handler
+
+                // Attach click listener to show detail
+                gameItem.addEventListener('click', () => showHistoryDetail(game));
 
                 let statusClass = '';
                 let statusText = '';
@@ -2005,8 +2134,6 @@
         }
 
         function createMiniBoardHTML(boardState, boardSize) {
-            // Adjust dimensions for mini-board. Default cell size of 25px
-            // The gap is 0.5rem (8px), so total size is (cell_size + gap) * boardSize
             const cellSizePx = 20; // Smaller cells for mini-board
             const gapPx = 1; // Small gap for visual separation
             const totalBoardSizePx = (cellSizePx + gapPx) * boardSize;
@@ -2028,6 +2155,56 @@
             return boardHTML;
         }
 
+        // --- History Detail Screen Logic ---
+        let currentDetailGameMoves = [];
+        let currentDetailMoveIndex = -1; // -1 means initial empty board
+
+        function showHistoryDetail(gameData) {
+            hideAllScreens();
+            historyDetailScreen.classList.remove('hidden');
+
+            // Populate game info
+            document.getElementById('detail-mode').textContent = gameData.mode === 'local' ? 'Local' : (gameData.mode === 'ai' ? 'Vs IA' : 'En ligne');
+            document.getElementById('detail-date').textContent = gameData.date;
+            document.getElementById('detail-opponent').textContent = gameData.opponent;
+            let statusText = '';
+            if (gameData.status === 'won') statusText = 'Victoire';
+            else if (gameData.status === 'lost') statusText = 'Défaite';
+            else statusText = 'Nul';
+            document.getElementById('detail-status').textContent = statusText;
+
+            // Initialize board and moves
+            createCells('detail-board', () => {}); // No click handler for replay board
+            currentDetailGameMoves = gameData.moves || []; // Ensure it's an array
+            currentDetailMoveIndex = -1; // Start before the first move
+            updateDetailBoardDisplay();
+        }
+
+        function updateDetailBoardDisplay() {
+            const tempBoard = Array(BOARD_SIZE * BOARD_SIZE).fill('');
+            for (let i = 0; i <= currentDetailMoveIndex; i++) {
+                const move = currentDetailGameMoves[i];
+                if (move) { // Check if move exists (might be null/undefined if moves array is sparse)
+                    tempBoard[move.index] = move.player;
+                }
+            }
+
+            const detailCells = Array.from(document.querySelectorAll('#detail-board .cell'));
+            detailCells.forEach((cell, index) => {
+                cell.innerHTML = tempBoard[index];
+                cell.classList.remove('x', 'o');
+                if (tempBoard[index] === 'X') {
+                    cell.classList.add('x');
+                } else if (tempBoard[index] === 'O') {
+                    cell.classList.add('o');
+                }
+            });
+
+            moveCounter.textContent = `Coup ${currentDetailMoveIndex + 1}/${currentDetailGameMoves.length}`;
+            prevMoveButton.disabled = currentDetailMoveIndex <= -1;
+            nextMoveButton.disabled = currentDetailMoveIndex >= currentDetailGameMoves.length - 1;
+        }
+
 
         // --- Helper for screen management ---
         function hideAllScreens() {
@@ -2036,9 +2213,11 @@
             aiGameScreen.classList.add('hidden');
             onlineSearchingScreen.classList.add('hidden');
             onlineGameScreen.classList.add('hidden');
-            gameEndScreen.classList.add('hidden'); // Ensure end screen is hidden
+            gameEndOverlay.classList.add('hidden'); // Hide the overlay
+            gameEndBanner.classList.add('hidden'); // Hide the banner
             leaderboardScreen.classList.add('hidden'); // Cacher le classement
             historyScreen.classList.add('hidden'); // Cacher l'historique
+            historyDetailScreen.classList.add('hidden'); // Hide detail screen
         }
 
 
@@ -2088,7 +2267,8 @@
 
             // Game End Screen Buttons
             gameEndReplayButton.addEventListener('click', () => {
-                gameEndScreen.classList.add('hidden');
+                gameEndOverlay.classList.add('hidden'); // Hide the overlay
+                gameEndBanner.classList.add('hidden'); // Hide the banner
                 if (currentEndGameType === 'local') {
                     resetLocalGame();
                 } else if (currentEndGameType === 'ai') {
@@ -2099,7 +2279,8 @@
             });
 
             gameEndHomeButton.addEventListener('click', () => {
-                gameEndScreen.classList.add('hidden');
+                gameEndOverlay.classList.add('hidden'); // Hide the overlay
+                gameEndBanner.classList.add('hidden'); // Hide the banner
                 if (currentEndGameType === 'local') {
                     leaveLocalGame();
                 } else if (currentEndGameType === 'ai') {
@@ -2204,6 +2385,27 @@
                         fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
                     }
                 });
+            }
+
+            // History detail screen buttons
+            if (prevMoveButton) {
+                prevMoveButton.addEventListener('click', () => {
+                    if (currentDetailMoveIndex > -1) {
+                        currentDetailMoveIndex--;
+                        updateDetailBoardDisplay();
+                    }
+                });
+            }
+            if (nextMoveButton) {
+                nextMoveButton.addEventListener('click', () => {
+                    if (currentDetailMoveIndex < currentDetailGameMoves.length - 1) {
+                        currentDetailMoveIndex++;
+                        updateDetailBoardDisplay();
+                    }
+                });
+            }
+            if (detailBackButton) {
+                detailBackButton.addEventListener('click', showGameHistoryScreen); // Go back to history list
             }
         });
     </script>
