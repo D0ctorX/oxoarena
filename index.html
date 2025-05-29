@@ -279,6 +279,22 @@
         .leaderboard-item.top-1 .rank, .leaderboard-item.top-1 .username, .leaderboard-item.top-1 .elo {
             color: #1A2B3C;
         }
+
+        /* Custom scrollbar for game history */
+        #games-history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        #games-history-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        #games-history-list::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        #games-history-list::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
     </style>
 </head>
 <body class="background-pattern">
@@ -504,6 +520,18 @@
                 <span>Retour à l'Accueil</span>
             </button>
         </div>
+    </div>
+
+    <div id="history-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full mt-8 text-[#1A2B3C]">
+        <h1 class="text-4xl font-extrabold mb-6 text-center">Historique des Parties</h1>
+        <div id="games-history-list" class="space-y-4 overflow-y-auto max-h-[60vh] w-full custom-scrollbar">
+            </div>
+        <button id="history-back-button" class="game-button mt-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+            </svg>
+            <span>Retour à l'Accueil</span>
+        </button>
     </div>
 
 
@@ -737,7 +765,7 @@
                 currentProfile.level = Math.min(MAX_LEVEL, Math.floor((currentProfile.elo || 0) / 25));
 
                 await setDoc(userProfileRef, currentProfile);
-                console.log("Firebase: Profil utilisateur mis à jour avec succès.", currentProfile);
+                console.log("Firebase: User profile updated successfully.", currentProfile);
                 // Only update the main profile display if it's the current user's profile
                 if (userId === currentUserId) {
                     displayUserProfile(userId, currentProfile);
@@ -917,6 +945,8 @@
         const gameEndHomeButton = document.getElementById('game-end-home-button');
         const leaderboardScreen = document.getElementById('leaderboard-screen'); // Nouvelle référence
         const leaderboardList = document.getElementById('leaderboard-list'); // Nouvelle référence
+        const historyScreen = document.getElementById('history-screen'); // Nouvelle référence pour l'historique
+        const gamesHistoryList = document.getElementById('games-history-list'); // Liste des parties de l'historique
 
 
         const playOnlineButton = document.getElementById('playOnlineButton');
@@ -925,6 +955,7 @@
         const showHistoryButton = document.getElementById('showHistoryButton'); // Référence au bouton Historique sous le profil
         const showLeaderboardButton = document.getElementById('showLeaderboardButton'); // Référence au bouton Classement dans la nav
         const leaderboardBackToHomeButton = document.getElementById('leaderboard-back-to-home-button'); // Bouton retour depuis classement
+        const historyBackButton = document.getElementById('history-back-button'); // Bouton retour depuis l'historique
 
 
         // --- Variables et éléments du DOM pour le jeu local ---
@@ -1043,8 +1074,11 @@
 
         // --- Fonctions communes pour les écrans de fin de partie ---
         let currentEndGameType = ''; // 'local', 'ai', 'online'
+        let currentOpponentName = ''; // Global variable to store opponent name for history
+        const playerXMarker = 'X'; // Assuming 'X' is always "my" player or Player 1 for history context
 
-        function showGameEndScreen(status, winner, gameType) {
+
+        function showGameEndScreen(status, winner, gameType, finalBoardState) {
             hideAllScreens();
             gameEndScreen.classList.remove('hidden', 'win', 'loss', 'draw');
             gameEndTitle.textContent = '';
@@ -1054,37 +1088,48 @@
 
             let title = '';
             let message = '';
+            let historyStatus = ''; // Status to save to history
 
             if (gameType === 'local') {
                 gameEndScreen.classList.add('draw'); // Couleur neutre pour local (pas de victoire/défaite absolue)
                 if (status === 'win') {
                     title = 'PARTIE TERMINÉE !';
                     message = `Le joueur ${winner} a gagné !`;
+                    historyStatus = (winner === playerXMarker) ? 'won' : 'lost'; // For local, X is player 1
                 } else { // draw
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
+                    historyStatus = 'draw';
                 }
+                currentOpponentName = 'Joueur Local'; // Set opponent for history
             } else { // AI or Online
                 if (status === 'win') {
                     gameEndScreen.classList.add('win');
                     title = 'VICTOIRE !';
                     message = `Vous avez gagné en tant que joueur ${winner} !`;
+                    historyStatus = 'won';
                 } else if (status === 'loss') {
                     gameEndScreen.classList.add('loss');
                     title = 'DÉFAITE !';
                     message = `Le joueur ${winner} a gagné.`;
+                    historyStatus = 'lost';
                 } else { // draw
                     gameEndScreen.classList.add('draw');
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
+                    historyStatus = 'draw';
                 }
 
                 // Update profile stats for AI (hard) and Online games
                 if (isAuthReady && currentUserId) {
                     if (gameType === 'ai' && aiDifficulty === 'hard') {
                         updateUserProfileStats(currentUserId, status);
+                        currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`; // Set opponent for history
                     } else if (gameType === 'online' && onlineOpponentProfile) {
                         updateUserProfileStats(currentUserId, status, onlineOpponentProfile.elo);
+                        currentOpponentName = onlineOpponentProfile.username || 'Joueur en ligne'; // Set opponent for history
+                    } else if (gameType === 'ai') { // Easy/Medium AI, no stats update, but still save to history
+                        currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`;
                     }
                 }
             }
@@ -1094,6 +1139,9 @@
 
             gameEndReplayButton.style.display = 'flex';
             gameEndHomeButton.style.display = 'flex';
+
+            // Save game to history
+            saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, BOARD_SIZE);
         }
 
         // --- Fonctions spécifiques au jeu local ---
@@ -1110,14 +1158,14 @@
 
             const hasWon = checkForWin(localCurrentPlayer, localBoard);
             if (hasWon) {
-                showGameEndScreen('win', localCurrentPlayer, 'local');
+                showGameEndScreen('win', localCurrentPlayer, 'local', [...localBoard]);
                 localGameActive = false;
                 return;
             }
 
             const hasDraw = checkForDraw(localBoard);
             if (hasDraw) {
-                showGameEndScreen('draw', null, 'local');
+                showGameEndScreen('draw', null, 'local', [...localBoard]);
                 localGameActive = false;
                 return;
             }
@@ -1173,13 +1221,13 @@
             const isDraw = checkForDraw(aiBoard);
 
             if (humanWon) {
-                showGameEndScreen('win', humanPlayer, 'ai');
+                showGameEndScreen('win', humanPlayer, 'ai', [...aiBoard]);
                 aiGameActive = false;
             } else if (aiWon) {
-                showGameEndScreen('loss', aiPlayer, 'ai');
+                showGameEndScreen('loss', aiPlayer, 'ai', [...aiBoard]);
                 aiGameActive = false;
             } else if (isDraw) {
-                showGameEndScreen('draw', null, 'ai');
+                showGameEndScreen('draw', null, 'ai', [...aiBoard]);
                 aiGameActive = false;
             } else {
                 aiCurrentPlayer = aiCurrentPlayer === humanPlayer ? aiPlayer : humanPlayer;
@@ -1661,21 +1709,21 @@
                     if (gameData.status === 'finished') {
                         onlineGameActive = false;
                         if (gameData.winner === currentOnlinePlayerRole) {
-                            showGameEndScreen('win', currentOnlinePlayerRole, 'online');
+                            showGameEndScreen('win', currentOnlinePlayerRole, 'online', [...onlineBoard]);
                         } else if (gameData.winner === 'draw') {
-                            showGameEndScreen('draw', null, 'online');
+                            showGameEndScreen('draw', null, 'online', [...onlineBoard]);
                         } else { // Opponent won
-                            showGameEndScreen('loss', gameData.winner, 'online');
+                            showGameEndScreen('loss', gameData.winner, 'online', [...onlineBoard]);
                         }
                     } else if (gameData.status === 'abandoned') {
                         onlineGameActive = false;
                         if (gameData.winner === currentOnlinePlayerRole) {
                              // This means opponent abandoned and we "won" by default
-                            showGameEndScreen('win', currentOnlinePlayerRole, 'online');
+                            showGameEndScreen('win', currentOnlinePlayerRole, 'online', [...onlineBoard]);
                         } else {
                             // This scenario ideally shouldn't happen if the winner is set to the other player on abandon
                             // but as a fallback, treat it as a loss or neutral if opponent's UID is our current role
-                            showGameEndScreen('draw', null, 'online'); // Or loss if winner is explicitly other player
+                            showGameEndScreen('draw', null, 'online', [...onlineBoard]); // Or loss if winner is explicitly other player
                         }
                     }
                     else {
@@ -1879,6 +1927,108 @@
             fetchLeaderboard(); // Charger le classement à chaque fois qu'on y accède
         }
 
+        // --- Fonctions de gestion de l'historique des parties ---
+        const HISTORY_STORAGE_KEY = 'oxoArenaGameHistory';
+        const MAX_HISTORY_ITEMS = 10;
+
+        /**
+         * Saves a completed game to local storage.
+         * @param {string} mode - 'local', 'ai', 'online'
+         * @param {string} finalStatus - 'won', 'lost', 'draw' (from perspective of player X)
+         * @param {string} opponent - Name of the opponent (e.g., 'IA Facile', 'Joueur Local', 'Joueur en ligne')
+         * @param {Array<string|null>} finalBoardState - The final state of the board
+         * @param {number} boardSize - The size of the board (currently always 5)
+         */
+        function saveGameToHistory(mode, finalStatus, opponent, finalBoardState, boardSize) {
+            let history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+            const newGame = {
+                id: Date.now().toString(), // Simple unique ID
+                mode: mode,
+                date: new Date().toLocaleString(),
+                opponent: opponent,
+                status: finalStatus, // 'won', 'lost', 'draw'
+                finalBoard: finalBoardState,
+                boardSize: boardSize
+            };
+            history.unshift(newGame); // Add to the beginning (most recent first)
+            history = history.slice(0, MAX_HISTORY_ITEMS); // Keep only the last 10
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+            console.log("Partie sauvegardée dans l'historique local:", newGame);
+        }
+
+        function showGameHistoryScreen() {
+            hideAllScreens();
+            historyScreen.classList.remove('hidden');
+            renderGameHistory();
+        }
+
+        function renderGameHistory() {
+            gamesHistoryList.innerHTML = ''; // Clear previous entries
+            const history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
+
+            if (history.length === 0) {
+                gamesHistoryList.innerHTML = '<p class="text-center p-4 text-gray-600">Aucune partie jouée pour le moment.</p>';
+                return;
+            }
+
+            history.forEach(game => {
+                const gameItem = document.createElement('div');
+                gameItem.className = 'bg-gray-50 p-4 rounded-lg shadow flex flex-col items-start space-y-2';
+
+                let statusClass = '';
+                let statusText = '';
+                // Determine status from the perspective of player X (player 1)
+                if (game.status === 'won') {
+                    statusClass = 'text-green-600';
+                    statusText = 'Victoire';
+                } else if (game.status === 'lost') {
+                    statusClass = 'text-red-600';
+                    statusText = 'Défaite';
+                } else {
+                    statusClass = 'text-blue-600';
+                    statusText = 'Nul';
+                }
+
+                gameItem.innerHTML = `
+                    <div class="w-full flex justify-between items-center">
+                        <span class="text-sm text-gray-500">${game.date}</span>
+                        <span class="font-semibold ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="text-lg font-medium text-gray-800">Mode: ${game.mode === 'local' ? 'Local' : (game.mode === 'ai' ? 'Vs IA' : 'En ligne')}</div>
+                    <div class="text-md text-gray-700">Adversaire: ${game.opponent}</div>
+                    <div class="w-full flex justify-center mt-2">
+                        ${createMiniBoardHTML(game.finalBoard, game.boardSize)}
+                    </div>
+                `;
+                gamesHistoryList.appendChild(gameItem);
+            });
+        }
+
+        function createMiniBoardHTML(boardState, boardSize) {
+            // Adjust dimensions for mini-board. Default cell size of 25px
+            // The gap is 0.5rem (8px), so total size is (cell_size + gap) * boardSize
+            const cellSizePx = 20; // Smaller cells for mini-board
+            const gapPx = 1; // Small gap for visual separation
+            const totalBoardSizePx = (cellSizePx + gapPx) * boardSize;
+
+            let boardHTML = `<div class="grid gap-[${gapPx}px] bg-gray-300 border border-gray-400 rounded-sm overflow-hidden" style="grid-template-columns: repeat(${boardSize}, 1fr); width: ${totalBoardSizePx}px; height: ${totalBoardSizePx}px;">`;
+            boardState.forEach(cell => {
+                let content = '';
+                let cellClass = '';
+                if (cell === 'X') {
+                    content = 'X';
+                    cellClass = 'text-[#FFD700]'; /* Jaune doré pour X */
+                } else if (cell === 'O') {
+                    content = 'O';
+                    cellClass = 'text-[#1A2B3C]'; /* Bleu foncé pour O */
+                }
+                boardHTML += `<div class="flex items-center justify-center bg-white font-bold ${cellClass}" style="width: ${cellSizePx}px; height: ${cellSizePx}px; font-size: ${cellSizePx * 0.8}px;">${content}</div>`;
+            });
+            boardHTML += `</div>`;
+            return boardHTML;
+        }
+
+
         // --- Helper for screen management ---
         function hideAllScreens() {
             homeScreen.classList.add('hidden');
@@ -1888,6 +2038,7 @@
             onlineGameScreen.classList.add('hidden');
             gameEndScreen.classList.add('hidden'); // Ensure end screen is hidden
             leaderboardScreen.classList.add('hidden'); // Cacher le classement
+            historyScreen.classList.add('hidden'); // Cacher l'historique
         }
 
 
@@ -2013,11 +2164,7 @@
 
             // --- Nouveaux Event Listeners pour Historique et Classement ---
             if (showHistoryButton) {
-                showHistoryButton.addEventListener('click', function() {
-                    showMessage("La section 'Historique des Parties' n'est pas encore implémentée.");
-                    // hideAllScreens();
-                    // historyScreen.classList.remove('hidden'); // Si vous implémentez cette section
-                });
+                showHistoryButton.addEventListener('click', showGameHistoryScreen); // Lien vers la nouvelle fonction
             }
 
             if (showLeaderboardButton) {
@@ -2038,6 +2185,18 @@
 
             if (leaderboardBackToHomeButton) {
                 leaderboardBackToHomeButton.addEventListener('click', function() {
+                    hideAllScreens();
+                    homeScreen.classList.remove('hidden');
+                    // Re-display current user's profile on returning to home
+                    if (isAuthReady && currentUserId) {
+                        fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
+                    }
+                });
+            }
+
+            // History screen back button
+            if (historyBackButton) {
+                historyBackButton.addEventListener('click', function() {
                     hideAllScreens();
                     homeScreen.classList.remove('hidden');
                     // Re-display current user's profile on returning to home
