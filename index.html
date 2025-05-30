@@ -964,10 +964,7 @@
 
         // Game Invitation Variables
         let gameInvitesListenerUnsubscribe = null; // Listener for incoming game invites
-        // IMPORTANT: Ensure 'gameProposals' is declared ONLY ONCE in your entire JavaScript environment.
-        // If you see "Uncaught SyntaxError: Identifier 'gameProposals' has already been declared",
-        // it means this variable is declared elsewhere.
-        let gameProposals = []; // Array to store incoming game proposals
+        let gameProposals = []; // Array to store incoming game proposals (Declared ONLY ONCE)
         let currentIncomingGameInvite = null; // Stores the active game invite being displayed in the modal
         let currentSentInviteListenerUnsubscribe = null; // Listener for the game invite sent by this user
 
@@ -3150,7 +3147,7 @@
         // --- Notification System ---
 
         let pendingFriendRequests = [];
-        let gameProposals = []; // This is the correct declaration for incoming proposals.
+        // `gameProposals` is declared globally above, so no `let` or `const` here.
 
         function setupFriendshipListeners() {
             if (!db || !currentUserId) return;
