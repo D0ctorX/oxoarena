@@ -13,7 +13,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            min-height: 100vh; /* Assure que le body prend au moins toute la hauteur du viewport */
             padding: 1rem; /* p-4 md:p-8 de Tailwind */
             overflow-x: hidden; /* Empêche le défilement horizontal */
             overflow-y: auto; /* Permet le défilement vertical si le contenu dépasse la hauteur du viewport */
@@ -365,9 +365,7 @@
     </style>
 </head>
 <body class="background-pattern">
-    <div class="w-full max-w-6xl flex flex-col items-center justify-center">
-
-        <div id="home-screen" class="bg-white rounded-xl shadow-2xl overflow-hidden w-full flex flex-col md:flex-row">
+    <div class="w-full max-w-6xl flex flex-col items-center justify-center min-h-[calc(100vh-2rem)]"> <div id="home-screen" class="bg-white rounded-xl shadow-2xl overflow-hidden w-full flex flex-col md:flex-row">
             <div class="w-full md:w-1/3 p-6 md:p-10 flex flex-col items-center justify-center bg-[#1A2B3C] text-white rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
                 <h1 class="text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
                     OXO Arena
@@ -403,17 +401,14 @@
             <div class="w-full md:w-2/3 p-6 md:p-10 flex flex-col justify-center items-center text-[#1A2B3C]">
                 <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">Votre Profil</h2>
                 <div id="profile-loading" class="text-xl text-gray-500">Chargement du profil...</div>
-                <div id="profile-content" class="bg-gray-100 p-6 rounded-xl shadow-inner w-full max-w-md space-y-4 text-lg md:text-xl hidden">
-                    <p class="flex justify-between items-center">
+                <div id="profile-content" class="bg-gray-100 p-4 rounded-xl shadow-inner w-full max-w-sm md:max-w-md space-y-3 text-base md:text-lg hidden"> <p class="flex justify-between items-center">
                         <span class="font-semibold">ID Utilisateur :</span>
-                        <span id="user-id-display" class="text-gray-700 font-medium break-all"></span>
-                    </p>
+                        <span id="user-id-display" class="text-gray-700 font-medium break-all text-sm md:text-base"></span> </p>
                     <div class="flex flex-col items-start w-full">
                         <div class="flex justify-between items-center w-full">
                             <span class="font-semibold">Pseudo :</span>
                             <span id="profile-username" class="text-gray-700 font-medium"></span>
-                            <button id="change-username-button" class="ml-2 px-3 py-1 bg-[#FFD700] text-[#1A2B3C] text-sm rounded-md hover:bg-yellow-400 transition-colors">Modifier</button>
-                        </div>
+                            <button id="change-username-button" class="ml-2 px-2 py-1 bg-[#FFD700] text-[#1A2B3C] text-xs rounded-md hover:bg-yellow-400 transition-colors">Modifier</button> </div>
                         <div id="username-edit-section" class="hidden mt-2 w-full">
                             <input type="text" id="new-username-input" class="w-full p-2 border border-gray-300 rounded-md text-gray-800" placeholder="Nouveau pseudo (3-20 caractères)">
                             <button id="save-username-button" class="mt-2 w-full py-2 bg-[#1A2B3C] text-white rounded-md hover:bg-gray-800">Sauvegarder</button>
@@ -430,8 +425,7 @@
                         <span id="profile-level" class="text-[#FFD700] font-bold"></span>
                     </p>
                     <div class="border-t border-gray-300 pt-4 mt-4"></div>
-                    <h3 class="text-2xl font-bold mb-2 text-center">Statistiques</h3>
-                    <p class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold mb-2 text-center">Statistiques</h3> <p class="flex justify-between items-center">
                         <span class="font-semibold">Parties jouées :</span>
                         <span id="profile-games-played" class="font-medium"></span>
                     </p>
@@ -881,8 +875,8 @@
                 console.log("Firebase: User profile updated successfully.", currentProfile);
                 // Only update the main profile display if it's the current user's profile
                 if (userId === currentUserId) {
+                    userProfileData = currentProfile; // Update global userProfileData
                     displayUserProfile(userId, currentProfile);
-                    userProfileData = currentProfile;
                 }
             } catch (error) {
                 console.error("Firebase: Erreur lors de la mise à jour du profil utilisateur :", error);
