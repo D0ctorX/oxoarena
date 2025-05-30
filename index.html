@@ -964,9 +964,12 @@
 
         // Game Invitation Variables
         let gameInvitesListenerUnsubscribe = null; // Listener for incoming game invites
+        // IMPORTANT: Ensure 'gameProposals' is declared ONLY ONCE in your entire JavaScript environment.
+        // If you see "Uncaught SyntaxError: Identifier 'gameProposals' has already been declared",
+        // it means this variable is declared elsewhere.
         let gameProposals = []; // Array to store incoming game proposals
         let currentIncomingGameInvite = null; // Stores the active game invite being displayed in the modal
-        let currentSentInviteListenerUnsubscribe = null; // NEW: Listener for the game invite sent by this user
+        let currentSentInviteListenerUnsubscribe = null; // Listener for the game invite sent by this user
 
         // Global variable to store all user profiles for quick lookup (e.g., by ID or username)
         // This will be populated by fetching all profiles, primarily for search and display.
@@ -2223,7 +2226,7 @@
 
 
             createCells('online-board', handleOnlineCellClick);
-            updateStatus(`Au tour de : X`, 'online');
+            updateStatus(`Au tour de : ${onlineCurrentTurn}`, 'online'); // Initial status from game data
             resetOnlineBoardUI();
 
             const gameRef = doc(db, 'games', gameId);
@@ -3307,7 +3310,7 @@
             });
         }
 
-        // NEW: Game Invitation Logic
+        // Game Invitation Logic
         async function sendGameInvitation(receiverId, receiverUsername) {
             if (!db || !currentUserId || !isAuthReady || !userProfileData) {
                 showMessage("Erreur: Firebase non prêt ou utilisateur non connecté.");
@@ -3374,7 +3377,11 @@
                 showMessage(`Invitation de partie envoyée à ${receiverUsername} ! En attente de réponse...`);
                 userProfileModalOverlay.classList.add('hidden');
 
-                // NEW: Set up a listener for this specific sent invitation
+                // Set isInGame to true for the sender immediately after sending the invite
+                await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data'), { isInGame: true });
+
+
+                // Set up a listener for this specific sent invitation
                 if (currentSentInviteListenerUnsubscribe) {
                     currentSentInviteListenerUnsubscribe(); // Unsubscribe previous listener if any
                 }
@@ -3420,6 +3427,10 @@
             } catch (error) {
                 console.error("Erreur lors de l'envoi de l'invitation de partie:", error);
                 showMessage("Erreur lors de l'envoi de l'invitation: " + error.message);
+                // Ensure isInGame is set to false if an error occurs during sending
+                if (currentUserId) {
+                    await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data'), { isInGame: false });
+                }
             } finally {
                 // Modal is closed after showing "En attente de réponse..."
             }
@@ -3750,14 +3761,14 @@
             blockUserButton.addEventListener('click', () => blockUser(modalProfileId.textContent));
             unblockUserButton.addEventListener('click', () => unblockUser(modalProfileId.textContent));
             
-            // NEW: Propose Game Button Listener
+            // Propose Game Button Listener
             proposeGameButton.addEventListener('click', () => sendGameInvitation(modalProfileId.textContent, modalProfileUsername.textContent));
 
             // Notification Modal Actions
             notificationButton.addEventListener('click', showNotificationModal);
             notificationModalCloseButton.addEventListener('click', () => notificationModalOverlay.classList.add('hidden'));
 
-            // NEW: Game Invite Modal Actions
+            // Game Invite Modal Actions
             gameInviteModalCloseButton.addEventListener('click', () => {
                 gameInviteModalOverlay.classList.add('hidden');
                 currentIncomingGameInvite = null; // Clear the active invite
