@@ -593,7 +593,6 @@
                         <span id="profile-wins" class="text-green-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Défaites :</span>
                         <span id="profile-losses" class="text-red-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
@@ -964,9 +963,10 @@
         let currentFriendshipDocId = null; // Stores the document ID of the current friendship being viewed/managed
 
         // Game Invitation Variables
-        let gameInvitesListenerUnsubscribe = null;
+        let gameInvitesListenerUnsubscribe = null; // Listener for incoming game invites
         let gameProposals = []; // Array to store incoming game proposals
         let currentIncomingGameInvite = null; // Stores the active game invite being displayed in the modal
+        let currentSentInviteListenerUnsubscribe = null; // NEW: Listener for the game invite sent by this user
 
         // Global variable to store all user profiles for quick lookup (e.g., by ID or username)
         // This will be populated by fetching all profiles, primarily for search and display.
@@ -989,7 +989,7 @@
 
                     // Start listening to friends, pending requests, and game invites
                     setupFriendshipListeners();
-                    setupGameInviteListener(); // NEW: Setup listener for game invites
+                    setupGameInviteListener(); // Setup listener for incoming game invites
                     // Fetch all user profiles for search functionality
                     fetchAllUserProfiles();
                     // Set up presence (lastOnline) listener
@@ -3147,8 +3147,7 @@
         // --- Notification System ---
 
         let pendingFriendRequests = [];
-        // The global `gameProposals` is already declared at the top.
-        // let gameProposals = []; // REMOVED: This was the duplicate declaration!
+        let gameProposals = []; // This is the correct declaration for incoming proposals.
 
         function setupFriendshipListeners() {
             if (!db || !currentUserId) return;
@@ -3210,7 +3209,7 @@
             );
         }
 
-        // NEW: Setup listener for incoming game invites
+        // Setup listener for incoming game invites
         function setupGameInviteListener() {
             if (!db || !currentUserId) return;
 
@@ -3361,20 +3360,68 @@
                     return;
                 }
 
-                await addDoc(collection(db, "game_invites"), {
+                // Add the new invitation document
+                const newInviteRef = await addDoc(collection(db, "game_invites"), {
                     senderId: currentUserId,
                     senderUsername: userProfileData.username,
                     receiverId: receiverId,
                     receiverUsername: receiverUsername,
                     status: "pending",
-                    timestamp: serverTimestamp()
+                    timestamp: serverTimestamp(),
+                    gameId: null // Initialize gameId as null
                 });
-                showMessage(`Invitation de partie envoyée à ${receiverUsername} !`);
+
+                showMessage(`Invitation de partie envoyée à ${receiverUsername} ! En attente de réponse...`);
+                userProfileModalOverlay.classList.add('hidden');
+
+                // NEW: Set up a listener for this specific sent invitation
+                if (currentSentInviteListenerUnsubscribe) {
+                    currentSentInviteListenerUnsubscribe(); // Unsubscribe previous listener if any
+                }
+                currentSentInviteListenerUnsubscribe = onSnapshot(newInviteRef, async (docSnap) => {
+                    if (docSnap.exists()) {
+                        const inviteData = docSnap.data();
+                        if (inviteData.status === 'accepted' && inviteData.gameId) {
+                            console.log("Sent invite accepted! Starting game for sender.");
+                            if (currentSentInviteListenerUnsubscribe) {
+                                currentSentInviteListenerUnsubscribe(); // Unsubscribe once accepted
+                                currentSentInviteListenerUnsubscribe = null;
+                            }
+                            // Start game for the sender (Comte 1) as Player X, opponent is receiver (Comte 2)
+                            startGameOnline(inviteData.gameId, 'X', inviteData.receiverId);
+                        } else if (inviteData.status === 'declined') {
+                            console.log("Sent invite declined.");
+                            if (currentSentInviteListenerUnsubscribe) {
+                                currentSentInviteListenerUnsubscribe(); // Unsubscribe once declined
+                                currentSentInviteListenerUnsubscribe = null;
+                            }
+                            showMessage(`${inviteData.receiverUsername} a refusé votre invitation de partie.`);
+                            // Set isInGame to false for the sender if they were waiting
+                            if (currentUserId) {
+                                await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data'), { isInGame: false });
+                            }
+                        }
+                    } else {
+                        console.log("Sent invite document deleted or no longer exists.");
+                        if (currentSentInviteListenerUnsubscribe) {
+                            currentSentInviteListenerUnsubscribe();
+                            currentSentInviteListenerUnsubscribe = null;
+                        }
+                        // Set isInGame to false for the sender if they were waiting
+                        if (currentUserId) {
+                            await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data'), { isInGame: false });
+                        }
+                    }
+                }, (error) => {
+                    console.error("Error listening to sent game invite:", error);
+                    showMessage("Erreur lors de l'écoute de l'invitation envoyée: " + error.message);
+                });
+
             } catch (error) {
                 console.error("Erreur lors de l'envoi de l'invitation de partie:", error);
                 showMessage("Erreur lors de l'envoi de l'invitation: " + error.message);
             } finally {
-                userProfileModalOverlay.classList.add('hidden');
+                // Modal is closed after showing "En attente de réponse..."
             }
         }
 
@@ -3413,15 +3460,11 @@
 
             const inviteRef = doc(db, "game_invites", inviteId);
             try {
-                // Update invite status to accepted
-                await updateDoc(inviteRef, { status: "accepted", timestamp: serverTimestamp() });
-
                 // Create a new game document (similar to matchmaking)
                 const gameRef = doc(collection(db, 'games'));
                 const gameId = gameRef.id;
 
-                // Determine who is X and O based on current user's role in the invite
-                // Let's say the sender is always X and receiver is always O for invited games
+                // Sender is always X, Receiver is always O for invited games
                 const playerXId = senderId;
                 const playerOId = currentUserId;
 
@@ -3436,6 +3479,9 @@
                     lastMoveTime: serverTimestamp(),
                     moves: []
                 });
+
+                // Update invite status to accepted AND add gameId
+                await updateDoc(inviteRef, { status: "accepted", gameId: gameId, timestamp: serverTimestamp() });
 
                 // Update both players' isInGame status to true
                 await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data'), { isInGame: true });
