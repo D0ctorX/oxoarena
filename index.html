@@ -397,7 +397,7 @@
             display: none; /* Caché par default */
         }
 
-        /* Styles pour les modals génériques (profil, chat, notifications) */
+        /* Styles pour les modals génériques (profil, notifications) */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -472,67 +472,6 @@
             text-align: right;
             padding-left: 0.5rem; /* Petit espace */
             word-break: break-all; /* Empêche l'ID de déborder */
-        }
-
-        /* Styles pour le chat */
-        #chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            border: 1px solid #e0e0e0;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            background-color: #f8f8f8;
-            min-height: 200px; /* Hauteur minimale pour la zone de chat */
-            max-height: 400px; /* Hauteur maximale pour la zone de chat */
-        }
-        .chat-message {
-            max-width: 70%;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.75rem;
-            word-wrap: break-word;
-        }
-        .chat-message.self {
-            align-self: flex-end;
-            background-color: #1A2B3C;
-            color: white;
-            border-bottom-right-radius: 0;
-        }
-        .chat-message.other {
-            align-self: flex-start;
-            background-color: #E5E7EB;
-            color: #1A2B3C;
-            border-bottom-left-radius: 0;
-        }
-        .chat-message .timestamp {
-            font-size: 0.7rem;
-            color: #9CA3AF;
-            margin-top: 0.2rem;
-            text-align: right;
-        }
-        .chat-input-area {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        .chat-input-area input {
-            flex-grow: 1;
-            padding: 0.75rem;
-            border: 1px solid #D1D5DB;
-            border-radius: 0.5rem;
-        }
-        .chat-input-area button {
-            background-color: #FFD700;
-            color: #1A2B3C;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        .chat-input-area button:hover {
-            background-color: #F59E0B;
         }
 
         /* Styles pour les demandes d'amis et invitations de partie dans le modal de notifications */
@@ -947,10 +886,7 @@
                 <button id="propose-game-button" class="game-button px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 hidden">
                     <i class="fas fa-gamepad mr-2"></i> Proposer Partie
                 </button>
-                <button id="open-chat-button" class="game-button px-4 py-2 text-sm bg-blue-800 hover:bg-blue-900 hidden">
-                    <i class="fas fa-comment mr-2"></i> Chatter
-                </button>
-            </div>
+                </div>
         </div>
     </div>
 
@@ -964,32 +900,18 @@
         </div>
     </div>
 
-    <div id="chat-modal-overlay" class="modal-overlay hidden">
-        <div id="chat-modal-content" class="modal-content max-w-xl w-full">
-            <button class="modal-close-button" id="chat-modal-close"><i class="fas fa-times"></i></button>
-            <h2 id="chat-partner-name" class="text-3xl font-bold text-center text-[#1A2B3C] mb-4">Chat avec ...</h2>
-            <div id="chat-messages" class="flex-grow overflow-y-auto">
-                </div>
-            <div class="chat-input-area">
-                <input type="text" id="chat-message-input" placeholder="Écrivez votre message..." class="p-2 border rounded-md">
-                <button id="send-chat-message-button">Envoyer</button>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
         // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // Corrected: Added addDoc to the import list
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, or, and, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
 
         // --- Firebase Initialization ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'oxoarena';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'oxoarena'; // Default to 'oxoarena' if not provided by Canvas
         let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Fixed: initialAuthToken was not defined
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
 
         if (Object.keys(firebaseConfig).length === 0) {
             console.warn("Firebase: Exécution locale. Utilisation de la configuration Firebase fournie par l'utilisateur.");
@@ -1026,9 +948,6 @@
         // Friend System Variables
         let friendsListenerUnsubscribe = null;
         let pendingRequestsListenerUnsubscribe = null;
-        let chatListenerUnsubscribe = null;
-        let currentChatPartnerId = null;
-        let currentChatPartnerUsername = null;
         let currentFriendshipDocId = null; // Stores the document ID of the current friendship being viewed/managed
 
         // Global variable to store all user profiles for quick lookup (e.g., by ID or username)
@@ -1169,6 +1088,16 @@
                 return { ...defaultUserProfile };
             }
 
+            // Ensure the base 'artifacts/{appId}' document exists
+            const appIdDocRef = doc(db, 'artifacts', appId);
+            try {
+                await setDoc(appIdDocRef, { initialized: true }, { merge: true });
+                console.log(`Firebase: Document artifacts/${appId} assuré.`);
+            } catch (error) {
+                console.error(`Firebase: Erreur lors de l'assurance du document artifacts/${appId}:`, error);
+                // Continue execution, but log the error
+            }
+
             const userProfileRef = doc(db, `artifacts/${appId}/users/${userIdToFetch}/profile`, 'data');
             const userDocRef = doc(db, `artifacts/${appId}/users`, userIdToFetch); // Référence au document parent de l'utilisateur
 
@@ -1193,7 +1122,7 @@
                 } else {
                     console.log("Firebase: Pas de profil utilisateur trouvé, création par défaut.");
                     profileData = { ...defaultUserProfile };
-                    await setDoc(userProfileRef, profileData);
+                    await setDoc(userProfileRef, profileData); // Use setDoc for initial creation
                     console.log("Firebase: Profil par défaut créé.");
                 }
                 return profileData;
@@ -1466,7 +1395,7 @@
         const moveCounter = document.getElementById('move-counter');
         const detailBackButton = document.getElementById('detail-back-button');
 
-        // NOUVEAUX ÉLÉMENTS DU DOM POUR LE SYSTÈME D'AMIS ET CHAT
+        // Éléments du DOM pour le système d'amis (chat supprimé)
         const showFriendsButton = document.getElementById('showFriendsButton');
         const friendsScreen = document.getElementById('friends-screen');
         const friendsBackToHomeButton = document.getElementById('friends-back-to-home-button');
@@ -1495,20 +1424,13 @@
         const blockUserButton = document.getElementById('block-user-button');
         const unblockUserButton = document.getElementById('unblock-user-button');
         const proposeGameButton = document.getElementById('propose-game-button');
-        const openChatButton = document.getElementById('open-chat-button');
+        // Supprimé: const openChatButton = document.getElementById('open-chat-button');
 
         const notificationButton = document.getElementById('notification-button');
         const notificationCount = document.getElementById('notification-count');
         const notificationModalOverlay = document.getElementById('notification-modal-overlay');
         const notificationModalCloseButton = document.getElementById('notification-modal-close');
         const notificationList = document.getElementById('notification-list');
-
-        const chatModalOverlay = document.getElementById('chat-modal-overlay');
-        const chatModalCloseButton = document.getElementById('chat-modal-close');
-        const chatPartnerName = document.getElementById('chat-partner-name');
-        const chatMessagesDiv = document.getElementById('chat-messages');
-        const chatMessageInput = document.getElementById('chat-message-input');
-        const sendChatMessageButton = document.getElementById('send-chat-message-button');
 
 
         const playOnlineButton = document.getElementById('playOnlineButton');
@@ -2668,7 +2590,6 @@
             friendsScreen.classList.add('hidden'); // Hide friends screen
             userProfileModalOverlay.classList.add('hidden'); // Hide profile modal
             notificationModalOverlay.classList.add('hidden'); // Hide notification modal
-            chatModalOverlay.classList.add('hidden'); // Hide chat modal
         }
 
         // --- FRIEND SYSTEM FUNCTIONS ---
@@ -2776,7 +2697,7 @@
             blockUserButton.classList.add('hidden');
             unblockUserButton.classList.add('hidden');
             proposeGameButton.classList.add('hidden');
-            openChatButton.classList.add('hidden');
+            // Supprimé: openChatButton.classList.add('hidden');
 
             // Determine friendship status and show relevant buttons
             const { user1Id, user2Id } = getOrderedUserIds(currentUserId, targetUserId);
@@ -2810,7 +2731,7 @@
             } else if (friendshipStatus === 'accepted') {
                 unfriendButton.classList.remove('hidden');
                 proposeGameButton.classList.remove('hidden');
-                openChatButton.classList.remove('hidden');
+                // Supprimé: openChatButton.classList.remove('hidden');
                 blockUserButton.classList.remove('hidden'); // Can block an accepted friend
             } else if (friendshipStatus === 'blocked') {
                 if (querySnapshot.docs[0].data().senderId === currentUserId) { // Current user blocked target
@@ -3018,7 +2939,6 @@
 
             try {
                 // Query for friendships where current user is either user1Id or user2Id AND status is 'accepted'
-                // FIX: Wrap or() and where() in an and() statement
                 const q = query(
                     collection(db, "friendships"),
                     and(
@@ -3052,12 +2972,13 @@
                 // Sort friends: online first, then alphabetically by username
                 friends.sort((a, b) => {
                     const fiveMinutesAgo = new Date().getTime() - (5 * 60 * 1000);
-                    const onlineA = a.lastOnline && (a.lastOnline.toDate().getTime() > fiveMinutesAgo);
-                    const onlineB = b.lastOnline && (b.lastOnline.toDate().getTime() > fiveMinutesAgo);
+                    // Correction ici : Vérifier si toDate est une fonction avant de l'appeler
+                    const onlineA = a.lastOnline && typeof a.lastOnline.toDate === 'function' && (a.lastOnline.toDate().getTime() > fiveMinutesAgo);
+                    const onlineB = b.lastOnline && typeof b.lastOnline.toDate === 'function' && (b.lastOnline.toDate().getTime() > fiveMinutesAgo);
 
-                    if (onlineA && !onlineB) return -1; // A is online, B is not
-                    if (!onlineA && onlineB) return 1;  // B is online, A is not
-                    return (a.username || '').localeCompare(b.username || ''); // Alphabetical if both are online/offline
+                    if (onlineA && !onlineB) return -1; // A est en ligne, B ne l'est pas
+                    if (!onlineA && onlineB) return 1;  // B est en ligne, A ne l'est pas
+                    return (a.username || '').localeCompare(b.username || ''); // Tri alphabétique si les deux sont en ligne/hors ligne
                 });
 
 
@@ -3069,10 +2990,11 @@
 
                     let statusIndicatorClass = '';
                     let statusText = '';
-                    if (friend.lastOnline && (new Date().getTime() - friend.lastOnline.toDate().getTime() < 5 * 60 * 1000)) {
+                    // Correction ici : Vérifier si toDate est une fonction avant de l'appeler
+                    if (friend.lastOnline && typeof friend.lastOnline.toDate === 'function' && (new Date().getTime() - friend.lastOnline.toDate().getTime() < 5 * 60 * 1000)) {
                         statusIndicatorClass = 'online';
                         statusText = 'En ligne';
-                    } else if (friend.lastOnline) {
+                    } else if (friend.lastOnline && typeof friend.lastOnline.toDate === 'function') {
                         const lastOnlineDate = friend.lastOnline.toDate();
                         const diffMs = new Date().getTime() - lastOnlineDate.getTime();
                         const minutes = Math.floor(diffMs / (1000 * 60));
@@ -3158,7 +3080,6 @@
             if (pendingRequestsListenerUnsubscribe) pendingRequestsListenerUnsubscribe();
 
             // Listener for accepted friends (for friends list)
-            // FIX: Wrap or() and where() in an and() statement
             friendsListenerUnsubscribe = onSnapshot(
                 query(
                     collection(db, "friendships"),
@@ -3262,109 +3183,6 @@
                 // Add event listeners for game proposal acceptance/rejection
                 notificationList.appendChild(item);
             });
-        }
-
-        // --- Chat System ---
-
-        async function openChat(partnerId, partnerUsername) {
-            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
-            if (partnerId === currentUserId) { showMessage("Vous ne pouvez pas chatter avec vous-même."); return; }
-
-            currentChatPartnerId = partnerId;
-            currentChatPartnerUsername = partnerUsername;
-            chatPartnerName.textContent = `Chat avec ${partnerUsername}`;
-
-            hideAllScreens(); // Hide all other screens
-            chatModalOverlay.classList.remove('hidden');
-            chatMessagesDiv.innerHTML = ''; // Clear previous messages
-            chatMessageInput.value = ''; // Clear input
-
-            // Setup real-time listener for chat messages
-            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, partnerId);
-            const chatRoomId = `${user1Id}_${user2Id}`;
-            const chatDocRef = doc(db, "chats", chatRoomId);
-
-            if (chatListenerUnsubscribe) {
-                chatListenerUnsubscribe(); // Unsubscribe from previous chat if any
-            }
-
-            chatListenerUnsubscribe = onSnapshot(chatDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const chatData = docSnap.data();
-                    displayChatMessages(chatData.messages || []);
-                } else {
-                    displayChatMessages([]); // No messages yet
-                    console.log("Aucune conversation trouvée, la créera au premier message.");
-                }
-            }, (error) => {
-                console.error("Erreur d'écoute du chat:", error);
-                showMessage("Erreur de connexion au chat: " + error.message);
-            });
-        }
-
-        function displayChatMessages(messages) {
-            chatMessagesDiv.innerHTML = '';
-            if (messages.length === 0) {
-                chatMessagesDiv.innerHTML = '<p class="p-4 text-gray-500 text-center">Commencez la conversation !</p>';
-                return;
-            }
-
-            // Sort messages by timestamp to ensure correct order
-            messages.sort((a, b) => (a.timestamp?.toDate() || 0) - (b.timestamp?.toDate() || 0));
-
-            messages.forEach(msg => {
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('chat-message');
-                messageElement.classList.add(msg.senderId === currentUserId ? 'self' : 'other');
-
-                const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
-                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                messageElement.innerHTML = `
-                    <p>${msg.text}</p>
-                    <span class="timestamp">${timeString}</span>
-                `;
-                chatMessagesDiv.appendChild(messageElement);
-            });
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom to show latest message
-        }
-
-        async function sendChatMessage() {
-            const messageText = chatMessageInput.value.trim();
-            if (!messageText || !currentChatPartnerId || !currentUserId || !db || !isAuthReady) {
-                return;
-            }
-
-            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, currentChatPartnerId);
-            const chatRoomId = `${user1Id}_${user2Id}`;
-            const chatDocRef = doc(db, "chats", chatRoomId);
-
-            try {
-                const docSnap = await getDoc(chatDocRef);
-                const newMessage = {
-                    senderId: currentUserId,
-                    text: messageText,
-                    timestamp: serverTimestamp()
-                };
-
-                if (docSnap.exists()) {
-                    // Update existing chat document by adding to the messages array
-                    await updateDoc(chatDocRef, {
-                        messages: arrayUnion(newMessage)
-                    });
-                } else {
-                    // Create new chat document with the first message
-                    await setDoc(chatDocRef, {
-                        user1Id: user1Id,
-                        user2Id: user2Id,
-                        messages: [newMessage]
-                    });
-                }
-                chatMessageInput.value = ''; // Clear input field after sending
-            } catch (error) {
-                console.error("Erreur lors de l'envoi du message:", error);
-                showMessage("Erreur lors de l'envoi du message: " + error.message);
-            }
         }
 
         // --- Logique de navigation entre les écrans ---
@@ -3525,6 +3343,7 @@
                 historyBackButton.addEventListener('click', function() {
                     hideAllScreens();
                     homeScreen.classList.remove('hidden');
+                    // Re-display current user's profile on returning to home
                     if (isAuthReady && currentUserId) {
                         fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
                     }
@@ -3549,10 +3368,10 @@
                 });
             }
             if (detailBackButton) {
-                detailBackButton.addEventListener('click', showGameHistoryScreen);
+                detailBackButton.addEventListener('click', showGameHistoryScreen); // Go back to history list
             }
 
-            // --- NOUVEAUX LISTENERS POUR LE SYSTÈME D'AMIS ET CHAT ---
+            // --- NOUVEAUX LISTENERS POUR LE SYSTÈME D'AMIS (CHAT SUPPRIMÉ) ---
             if (showFriendsButton) {
                 showFriendsButton.addEventListener('click', showFriendsScreen);
             }
@@ -3586,35 +3405,10 @@
             blockUserButton.addEventListener('click', () => blockUser(modalProfileId.textContent));
             unblockUserButton.addEventListener('click', () => unblockUser(modalProfileId.textContent));
             proposeGameButton.addEventListener('click', () => showMessage("La proposition de partie n'est pas encore implémentée.")); // Placeholder for now
-            openChatButton.addEventListener('click', () => openChat(modalProfileId.textContent, modalProfileUsername.textContent));
 
             // Notification Modal Actions
             notificationButton.addEventListener('click', showNotificationModal);
             notificationModalCloseButton.addEventListener('click', () => notificationModalOverlay.classList.add('hidden'));
-
-            // Chat Modal Actions
-            chatModalCloseButton.addEventListener('click', () => {
-                chatModalOverlay.classList.add('hidden');
-                if (chatListenerUnsubscribe) {
-                    chatListenerUnsubscribe(); // Stop listening to chat messages
-                    chatListenerUnsubscribe = null;
-                }
-                currentChatPartnerId = null;
-                currentChatPartnerUsername = null;
-                // Return to friends screen if chat was opened from there, else home
-                if (!friendsScreen.classList.contains('hidden')) { // Check if friends screen was active before chat
-                    showFriendsScreen();
-                } else {
-                    hideAllScreens();
-                    homeScreen.classList.remove('hidden');
-                }
-            });
-            sendChatMessageButton.addEventListener('click', sendChatMessage);
-            chatMessageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    sendChatMessage();
-                }
-            });
         });
     </script>
 </body>
