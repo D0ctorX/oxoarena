@@ -6,6 +6,7 @@
     <title>OXO Arena</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -263,6 +264,7 @@
             padding: 0.75rem 1.5rem;
             border-bottom: 1px solid #e0e0e0;
             font-size: 1.125rem;
+            cursor: pointer; /* Rendre les éléments cliquables */
         }
 
         .leaderboard-item:last-child {
@@ -362,10 +364,217 @@
             background-color: #cccccc;
             cursor: not-allowed;
         }
+
+        /* Styles pour le bouton de notification (cloche) */
+        #notification-button {
+            position: relative;
+            background-color: transparent;
+            border: none;
+            color: #1A2B3C;
+            font-size: 1.8rem; /* Taille de l'icône */
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+        #notification-button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        #notification-count {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #EF4444; /* Rouge */
+            color: white;
+            border-radius: 50%;
+            padding: 0.2em 0.5em;
+            font-size: 0.7rem;
+            font-weight: bold;
+            line-height: 1;
+            min-width: 1.5em; /* Pour les nombres à deux chiffres */
+            text-align: center;
+            transform: translate(25%, -25%);
+            display: none; /* Caché par default */
+        }
+
+        /* Styles pour les modals génériques (profil, chat, notifications) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto; /* Permet le défilement si le contenu est trop grand */
+            padding: 1rem;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            max-width: 90%;
+            max-height: 90vh; /* Limite la hauteur du modal */
+            overflow-y: auto; /* Rend le contenu du modal défilable */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative; /* Pour le bouton de fermeture */
+        }
+        .modal-close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #1A2B3C;
+            cursor: pointer;
+        }
+
+        /* Styles spécifiques pour la liste d'amis/recherche */
+        .user-list-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .user-list-item:hover {
+            background-color: #f5f5f5;
+        }
+        .user-list-item:last-child {
+            border-bottom: none;
+        }
+        .user-list-item .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: gray; /* Offline */
+        }
+        .user-list-item .status-indicator.online {
+            background-color: #22C55E; /* Vert */
+        }
+        .user-list-item .username-display {
+            font-weight: 600;
+            color: #1A2B3C;
+        }
+        .user-list-item .user-id-display {
+            font-size: 0.8rem;
+            color: #6B7280;
+            flex-grow: 1; /* Prend l'espace restant */
+            text-align: right;
+            padding-left: 0.5rem; /* Petit espace */
+            word-break: break-all; /* Empêche l'ID de déborder */
+        }
+
+        /* Styles pour le chat */
+        #chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            background-color: #f8f8f8;
+            min-height: 200px; /* Hauteur minimale pour la zone de chat */
+            max-height: 400px; /* Hauteur maximale pour la zone de chat */
+        }
+        .chat-message {
+            max-width: 70%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.75rem;
+            word-wrap: break-word;
+        }
+        .chat-message.self {
+            align-self: flex-end;
+            background-color: #1A2B3C;
+            color: white;
+            border-bottom-right-radius: 0;
+        }
+        .chat-message.other {
+            align-self: flex-start;
+            background-color: #E5E7EB;
+            color: #1A2B3C;
+            border-bottom-left-radius: 0;
+        }
+        .chat-message .timestamp {
+            font-size: 0.7rem;
+            color: #9CA3AF;
+            margin-top: 0.2rem;
+            text-align: right;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .chat-input-area input {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+        }
+        .chat-input-area button {
+            background-color: #FFD700;
+            color: #1A2B3C;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .chat-input-area button:hover {
+            background-color: #F59E0B;
+        }
+
+        /* Styles pour les demandes d'amis et invitations de partie dans le modal de notifications */
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item .actions button {
+            margin-left: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.3rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .notification-item .actions .accept-button {
+            background-color: #22C55E;
+            color: white;
+        }
+        .notification-item .actions .accept-button:hover {
+            background-color: #16A34A;
+        }
+        .notification-item .actions .decline-button {
+            background-color: #EF4444;
+            color: white;
+        }
+        .notification-item .actions .decline-button:hover {
+            background-color: #DC2626;
+        }
     </style>
 </head>
 <body class="background-pattern">
-    <div class="w-full max-w-6xl flex flex-col items-center justify-center"> <div id="home-screen" class="bg-white rounded-xl shadow-2xl w-full flex flex-col md:flex-row max-h-[calc(100vh-2rem)] overflow-y-auto"> <div class="w-full md:w-1/3 p-6 md:p-10 flex flex-col items-center justify-center bg-[#1A2B3C] text-white rounded-t-xl md:rounded-l-xl md:rounded-tr-none flex-shrink-0"> <h1 class="text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
+    <div class="w-full max-w-6xl flex flex-col items-center justify-center">
+
+        <div id="home-screen" class="bg-white rounded-xl shadow-2xl w-full flex flex-col md:flex-row max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <div class="w-full md:w-1/3 p-6 md:p-10 flex flex-col items-center justify-center bg-[#1A2B3C] text-white rounded-t-xl md:rounded-l-xl md:rounded-tr-none flex-shrink-0">
+                <h1 class="text-4xl md:text-5xl font-extrabold mb-8 text-center tracking-tight">
                     OXO Arena
                 </h1>
                 <nav class="w-full space-y-4">
@@ -393,19 +602,32 @@
                         </svg>
                         <span>Classement</span>
                     </button>
+                    <button id="showFriendsButton" class="w-full py-3 px-6 bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-3">
+                        <i class="fas fa-users h-6 w-6"></i> <span>Amis</span>
+                    </button>
                 </nav>
             </div>
 
-            <div class="w-full md:w-2/3 p-6 md:p-10 flex flex-col justify-center items-center text-[#1A2B3C] flex-grow overflow-y-auto"> <h2 class="text-3xl md:text-4xl font-bold mb-6 text-center">Votre Profil</h2>
+            <div class="w-full md:w-2/3 p-6 md:p-10 flex flex-col justify-center items-center text-[#1A2B3C] flex-grow overflow-y-auto">
+                <div class="w-full flex justify-between items-center mb-6">
+                    <h2 class="text-3xl md:text-4xl font-bold text-center flex-grow">Votre Profil</h2>
+                    <button id="notification-button" class="relative">
+                        <i class="fas fa-bell"></i>
+                        <span id="notification-count" class="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2 py-1 text-xs font-bold -mt-2 -mr-2 hidden">0</span>
+                    </button>
+                </div>
                 <div id="profile-loading" class="text-xl text-gray-500">Chargement du profil...</div>
-                <div id="profile-content" class="bg-gray-100 p-4 rounded-xl shadow-inner w-full max-w-sm md:max-w-md space-y-3 text-base md:text-lg hidden"> <p class="flex justify-between items-center">
+                <div id="profile-content" class="bg-gray-100 p-4 rounded-xl shadow-inner w-full max-w-sm md:max-w-md space-y-3 text-base md:text-lg hidden">
+                    <p class="flex justify-between items-center">
                         <span class="font-semibold">ID Utilisateur :</span>
-                        <span id="user-id-display" class="text-gray-700 font-medium break-all text-sm md:text-base"></span> </p>
+                        <span id="user-id-display" class="text-gray-700 font-medium break-all text-sm md:text-base"></span>
+                    </p>
                     <div class="flex flex-col items-start w-full">
                         <div class="flex justify-between items-center w-full">
                             <span class="font-semibold">Pseudo :</span>
                             <span id="profile-username" class="text-gray-700 font-medium"></span>
-                            <button id="change-username-button" class="ml-2 px-2 py-1 bg-[#FFD700] text-[#1A2B3C] text-xs rounded-md hover:bg-yellow-400 transition-colors">Modifier</button> </div>
+                            <button id="change-username-button" class="ml-2 px-2 py-1 bg-[#FFD700] text-[#1A2B3C] text-xs rounded-md hover:bg-yellow-400 transition-colors">Modifier</button>
+                        </div>
                         <div id="username-edit-section" class="hidden mt-2 w-full">
                             <input type="text" id="new-username-input" class="w-full p-2 border border-gray-300 rounded-md text-gray-800" placeholder="Nouveau pseudo (3-20 caractères)">
                             <button id="save-username-button" class="mt-2 w-full py-2 bg-[#1A2B3C] text-white rounded-md hover:bg-gray-800">Sauvegarder</button>
@@ -422,7 +644,8 @@
                         <span id="profile-level" class="text-[#FFD700] font-bold"></span>
                     </p>
                     <div class="border-t border-gray-300 pt-4 mt-4"></div>
-                    <h3 class="text-xl font-bold mb-2 text-center">Statistiques</h3> <p class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold mb-2 text-center">Statistiques</h3>
+                    <p class="flex justify-between items-center">
                         <span class="font-semibold">Parties jouées :</span>
                         <span id="profile-games-played" class="font-medium"></span>
                     </p>
@@ -435,7 +658,6 @@
                         <span id="profile-losses" class="text-red-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Nuls :</span>
                         <span id="profile-draws" class="text-gray-500 font-medium"></span>
                     </p>
                 </div>
@@ -448,7 +670,8 @@
             </div>
         </div>
 
-        <div id="leaderboard-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-6 text-center">Classement des Joueurs</h1>
+        <div id="leaderboard-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h1 class="text-4xl font-extrabold mb-6 text-center">Classement des Joueurs</h1>
             <div id="leaderboard-list" class="leaderboard-list">
                 <div class="text-center p-4 text-gray-500">Chargement du classement...</div>
             </div>
@@ -460,7 +683,8 @@
             </button>
         </div>
 
-        <div id="local-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Local</h1>
+        <div id="local-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Local</h1>
             <p class="text-center text-gray-600 mb-6 italic">
                 Les parties jouées en local n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.).
             </p>
@@ -485,7 +709,8 @@
             </div>
         </div>
 
-        <div id="ai-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Contre IA</h1>
+        <div id="ai-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Contre IA</h1>
             <p class="text-center text-gray-600 mb-6 italic">
                 Les parties jouées contre l'IA en mode Facile et Moyen n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.). Seules les parties en mode Difficile sont prises en compte.
             </p>
@@ -515,7 +740,8 @@
             </div>
         </div>
 
-        <div id="online-searching-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-4 text-center">Recherche de partie...</h1>
+        <div id="online-searching-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h1 class="text-4xl font-extrabold mb-4 text-center">Recherche de partie...</h1>
             <p class="text-lg text-gray-600 mb-8 text-center">
                 Veuillez patienter pendant que nous trouvons un adversaire pour vous.
             </p>
@@ -528,7 +754,8 @@
             </button>
         </div>
 
-        <div id="online-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - En Ligne</h1>
+        <div id="online-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - En Ligne</h1>
             <p class="text-center text-gray-600 mb-2 italic">
                 Votre ID de partie : <span id="online-game-id-display" class="font-semibold break-all text-sm"></span>
             </p>
@@ -583,7 +810,8 @@
         <button id="message-box-close" class="game-button">OK</button>
     </div>
 
-    <div id="history-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-6 text-center">Historique des Parties</h1>
+    <div id="history-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <h1 class="text-4xl font-extrabold mb-6 text-center">Historique des Parties</h1>
         <div id="games-history-list" class="space-y-4 overflow-y-auto max-h-[60vh] w-full custom-scrollbar">
             </div>
         <button id="history-back-button" class="game-button mt-8">
@@ -594,7 +822,8 @@
         </button>
     </div>
 
-    <div id="history-detail-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto"> <h1 class="text-4xl font-extrabold mb-6 text-center">Détails de la Partie</h1>
+    <div id="history-detail-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <h1 class="text-4xl font-extrabold mb-6 text-center">Détails de la Partie</h1>
         <div class="history-detail-container">
             <div id="detail-game-info" class="history-detail-info">
                 <p>Mode: <span id="detail-mode"></span></p>
@@ -626,17 +855,141 @@
         </button>
     </div>
 
+    <div id="friends-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <h1 class="text-4xl font-extrabold mb-6 text-center">Vos Amis</h1>
+
+        <div class="w-full mb-6">
+            <h2 class="text-2xl font-bold mb-4 text-center">Rechercher un utilisateur</h2>
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="user-search-input" placeholder="Pseudo ou ID utilisateur" class="flex-grow p-2 border border-gray-300 rounded-md text-gray-800">
+                <button id="user-search-button" class="game-button px-4 py-2">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div id="user-search-results" class="bg-gray-50 rounded-md shadow-inner max-h-48 overflow-y-auto hidden">
+                <p class="p-4 text-gray-500 text-center">Aucun résultat.</p>
+            </div>
+        </div>
+
+        <div class="w-full mb-6">
+            <h2 class="text-2xl font-bold mb-4 text-center">Mes Amis</h2>
+            <div id="friends-list" class="bg-gray-50 rounded-md shadow-inner max-h-64 overflow-y-auto">
+                <p class="p-4 text-gray-500 text-center">Vous n'avez pas encore d'amis.</p>
+            </div>
+        </div>
+
+        <button id="friends-back-to-home-button" class="game-button mt-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+            </svg>
+            <span>Retour à l'Accueil</span>
+        </button>
+    </div>
+
+    <div id="user-profile-modal-overlay" class="modal-overlay hidden">
+        <div id="user-profile-modal-content" class="modal-content">
+            <button class="modal-close-button" id="user-profile-modal-close"><i class="fas fa-times"></i></button>
+            <h2 id="modal-profile-username" class="text-3xl font-bold text-center text-[#1A2B3C] mb-4"></h2>
+            <p class="text-center text-gray-600 text-sm">ID: <span id="modal-profile-id" class="break-all"></span></p>
+            <p class="text-center text-gray-600 text-sm">Dernière activité: <span id="modal-profile-last-online"></span></p>
+
+            <div class="bg-gray-100 p-4 rounded-xl shadow-inner w-full space-y-3 text-base">
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Elo :</span>
+                    <span id="modal-profile-elo" class="text-[#FFD700] font-bold"></span>
+                </p>
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Niveau :</span>
+                    <span id="modal-profile-level" class="text-[#FFD700] font-bold"></span>
+                </p>
+                <div class="border-t border-gray-300 pt-4 mt-4"></div>
+                <h3 class="text-xl font-bold mb-2 text-center">Statistiques</h3>
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Parties jouées :</span>
+                    <span id="modal-profile-games-played" class="font-medium"></span>
+                </p>
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Victoires :</span>
+                    <span id="modal-profile-wins" class="text-green-600 font-medium"></span>
+                </p>
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Défaites :</span>
+                    <span id="modal-profile-losses" class="text-red-600 font-medium"></span>
+                </p>
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Nuls :</span>
+                    <span id="modal-profile-draws" class="text-gray-500 font-medium"></span>
+                </p>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mt-4">
+                <button id="send-friend-request-button" class="game-button px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 hidden">
+                    <i class="fas fa-user-plus mr-2"></i> Envoyer Demande
+                </button>
+                <button id="cancel-friend-request-button" class="game-button px-4 py-2 text-sm bg-yellow-600 hover:bg-yellow-700 hidden">
+                    <i class="fas fa-user-minus mr-2"></i> Annuler Demande
+                </button>
+                <button id="accept-friend-request-button" class="game-button px-4 py-2 text-sm bg-green-600 hover:bg-green-700 hidden">
+                    <i class="fas fa-check mr-2"></i> Accepter Demande
+                </button>
+                <button id="decline-friend-request-button" class="game-button px-4 py-2 text-sm bg-red-600 hover:bg-red-700 hidden">
+                    <i class="fas fa-times mr-2"></i> Refuser Demande
+                </button>
+                <button id="unfriend-button" class="game-button px-4 py-2 text-sm bg-gray-600 hover:bg-gray-700 hidden">
+                    <i class="fas fa-user-slash mr-2"></i> Défriender
+                </button>
+                <button id="block-user-button" class="game-button px-4 py-2 text-sm bg-red-800 hover:bg-red-900 hidden">
+                    <i class="fas fa-ban mr-2"></i> Bloquer
+                </button>
+                <button id="unblock-user-button" class="game-button px-4 py-2 text-sm bg-green-800 hover:bg-green-900 hidden">
+                    <i class="fas fa-unlock mr-2"></i> Débloquer
+                </button>
+                <button id="propose-game-button" class="game-button px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 hidden">
+                    <i class="fas fa-gamepad mr-2"></i> Proposer Partie
+                </button>
+                <button id="open-chat-button" class="game-button px-4 py-2 text-sm bg-blue-800 hover:bg-blue-900 hidden">
+                    <i class="fas fa-comment mr-2"></i> Chatter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification-modal-overlay" class="modal-overlay hidden">
+        <div id="notification-modal-content" class="modal-content">
+            <button class="modal-close-button" id="notification-modal-close"><i class="fas fa-times"></i></button>
+            <h2 class="text-3xl font-bold text-center text-[#1A2B3C] mb-4">Notifications</h2>
+            <div id="notification-list" class="space-y-3">
+                <p class="p-4 text-gray-500 text-center">Aucune notification.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-modal-overlay" class="modal-overlay hidden">
+        <div id="chat-modal-content" class="modal-content max-w-xl w-full">
+            <button class="modal-close-button" id="chat-modal-close"><i class="fas fa-times"></i></button>
+            <h2 id="chat-partner-name" class="text-3xl font-bold text-center text-[#1A2B3C] mb-4">Chat avec ...</h2>
+            <div id="chat-messages" class="flex-grow overflow-y-auto">
+                </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-message-input" placeholder="Écrivez votre message..." class="p-2 border rounded-md">
+                <button id="send-chat-message-button">Envoyer</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         // Firebase imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Corrected: Added addDoc to the import list
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, or, and, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+
 
         // --- Firebase Initialization ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'oxoarena';
         let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; // Fixed: initialAuthToken was not defined
 
         if (Object.keys(firebaseConfig).length === 0) {
             console.warn("Firebase: Exécution locale. Utilisation de la configuration Firebase fournie par l'utilisateur.");
@@ -657,6 +1010,7 @@
         let currentUserId = null;
         let isAuthReady = false;
         let userProfileData = null; // Stores current user's profile data
+        let userProfileListenerUnsubscribe = null; // Listener for current user's profile
 
         // Online Game Variables
         let currentOnlineGameId = null;
@@ -668,7 +1022,18 @@
         let onlineGameListenerUnsubscribe = null;
         let onlineOpponentUserId = null; // Store opponent's user ID
         let onlineOpponentProfile = null; // Store opponent's profile data
-        // Removed gameSavedToHistoryForThisGameId as it's now handled robustly in saveGameToHistory
+
+        // Friend System Variables
+        let friendsListenerUnsubscribe = null;
+        let pendingRequestsListenerUnsubscribe = null;
+        let chatListenerUnsubscribe = null;
+        let currentChatPartnerId = null;
+        let currentChatPartnerUsername = null;
+        let currentFriendshipDocId = null; // Stores the document ID of the current friendship being viewed/managed
+
+        // Global variable to store all user profiles for quick lookup (e.g., by ID or username)
+        // This will be populated by fetching all profiles, primarily for search and display.
+        let allUserProfiles = {};
 
         if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
             app = initializeApp(firebaseConfig);
@@ -680,11 +1045,18 @@
                     currentUserId = user.uid;
                     isAuthReady = true;
                     console.log("Firebase: User signed in:", currentUserId);
-                    userProfileData = await fetchUserProfile(currentUserId); // Use fetchUserProfile for current user
-                    displayUserProfile(currentUserId, userProfileData); // Display current user's profile
-                    // Ensure profile content is visible after loading
+                    userProfileData = await fetchUserProfile(currentUserId);
+                    displayUserProfile(currentUserId, userProfileData);
                     document.getElementById('profile-loading').classList.add('hidden');
                     document.getElementById('profile-content').classList.remove('hidden');
+
+                    // Start listening to friends and pending requests
+                    setupFriendshipListeners();
+                    // Fetch all user profiles for search functionality
+                    fetchAllUserProfiles();
+                    // Set up presence (lastOnline) listener
+                    setupPresenceListener();
+
                 } else {
                     console.log("Firebase: No user signed in. Attempting sign-in...");
                     try {
@@ -697,7 +1069,6 @@
                         }
                     } catch (error) {
                         console.error("Firebase: Authentication error:", error);
-                        // Suppress specific permission error message if it doesn't break functionality
                         if (error.code !== 'permission-denied') {
                             showMessage("Erreur de connexion Firebase: " + error.message);
                         } else {
@@ -705,9 +1076,24 @@
                         }
                     }
                     isAuthReady = true;
-                    // Ensure profile content is visible even if not logged in (e.g., showing N/A)
                     document.getElementById('profile-loading').classList.add('hidden');
                     document.getElementById('profile-content').classList.remove('hidden');
+                    document.getElementById('user-id-display').textContent = 'Non connecté (Firebase désactivé)';
+                    document.getElementById('profile-username').textContent = 'Invité'; // Default for anonymous
+                    document.getElementById('profile-elo').textContent = 'N/A';
+                    document.getElementById('profile-level').textContent = 'N/A';
+                    document.getElementById('profile-games-played').textContent = 'N/A';
+                    document.getElementById('profile-wins').textContent = 'N/A';
+                    document.getElementById('profile-losses').textContent = 'N/A';
+                    document.getElementById('profile-draws').textContent = 'N/A';
+                    document.getElementById('playOnlineButton').disabled = true;
+                    document.getElementById('playOnlineButton').textContent = 'Jouer en Ligne (Hors ligne)';
+                    document.getElementById('showFriendsButton').disabled = true; // Disable friends button
+                    document.getElementById('showFriendsButton').classList.add('opacity-50', 'cursor-not-allowed');
+                    document.getElementById('notification-button').disabled = true; // Disable notification button
+                    document.getElementById('notification-button').classList.add('opacity-50', 'cursor-not-allowed');
+                    document.getElementById('change-username-button').disabled = true;
+                    document.getElementById('change-username-button').classList.add('opacity-50', 'cursor-not-allowed');
                 }
             });
         } else {
@@ -724,6 +1110,12 @@
             document.getElementById('profile-draws').textContent = 'N/A';
             document.getElementById('playOnlineButton').disabled = true;
             document.getElementById('playOnlineButton').textContent = 'Jouer en Ligne (Hors ligne)';
+            document.getElementById('showFriendsButton').disabled = true;
+            document.getElementById('showFriendsButton').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('notification-button').disabled = true;
+            document.getElementById('notification-button').classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('change-username-button').disabled = true;
+            document.getElementById('change-username-button').classList.add('opacity-50', 'cursor-not-allowed');
         }
 
         // --- Message Box Elements ---
@@ -767,6 +1159,7 @@
             draws: 0,
             username: 'Joueur' + Math.floor(Math.random() * 10000), // Default username
             lastUsernameChange: null, // No previous change
+            lastOnline: serverTimestamp() // New field for presence
         };
         const MAX_LEVEL = 50;
 
@@ -780,18 +1173,17 @@
             const userDocRef = doc(db, `artifacts/${appId}/users`, userIdToFetch); // Référence au document parent de l'utilisateur
 
             try {
-                // S'assurer que le document parent de l'utilisateur existe ou est créé/mis à jour.
-                // Ceci est crucial pour la requête du classement qui liste les documents dans la collection 'users'.
+                // Ensure the parent user document exists and update its lastActive timestamp
+                // This is important for security rules that might rely on the existence of the user document
                 await setDoc(userDocRef, { lastActive: serverTimestamp() }, { merge: true });
                 console.log(`Firebase: Document parent utilisateur pour ${userIdToFetch} assuré.`);
-
 
                 const docSnap = await getDoc(userProfileRef);
                 let profileData = {};
 
                 if (docSnap.exists()) {
                     profileData = docSnap.data();
-                    // S'assurer que tous les champs par défaut existent
+                    // Ensure all default fields are present if profile was created before they existed
                     for (const key in defaultUserProfile) {
                         if (profileData[key] === undefined) {
                             profileData[key] = defaultUserProfile[key];
@@ -807,7 +1199,6 @@
                 return profileData;
             } catch (error) {
                 console.error("Firebase: Erreur lors de la récupération ou la création du profil utilisateur :", error);
-                // Suppress specific permission error message if it doesn't break functionality
                 if (error.code !== 'permission-denied') {
                     showMessage("Erreur lors du chargement du profil: " + error.message);
                 } else {
@@ -833,29 +1224,31 @@
                 let eloChange = 0;
                 if (gameResult === 'win') {
                     currentProfile.wins = (currentProfile.wins || 0) + 1;
-                    if (opponentElo !== null) { // Online game Elo calculation
-                        if (currentProfile.elo >= opponentElo) { // Won against lower/equal Elo
-                            eloChange = 8;
-                        } else { // Won against higher Elo
-                            eloChange = 15;
+                    if (opponentElo !== null) {
+                        // K-factor logic for Elo change based on opponent's Elo
+                        if (currentProfile.elo >= opponentElo) {
+                            eloChange = 8; // Smaller gain for winning against lower/equal Elo
+                        } else {
+                            eloChange = 15; // Larger gain for winning against higher Elo
                         }
-                    } else { // AI game or other default win (only hard AI impacts stats)
-                        eloChange = 10;
+                    } else {
+                        eloChange = 10; // Default gain for AI hard mode or if opponent Elo is unknown
                     }
                 } else if (gameResult === 'loss') {
                     currentProfile.losses = (currentProfile.losses || 0) + 1;
-                    if (opponentElo !== null) { // Online game Elo calculation
-                        if (currentProfile.elo >= opponentElo) { // Lost against lower/equal Elo
-                            eloChange = -15;
-                        } else { // Lost against higher Elo
-                            eloChange = -8;
+                    if (opponentElo !== null) {
+                        // K-factor logic for Elo change based on opponent's Elo
+                        if (currentProfile.elo >= opponentElo) {
+                            eloChange = -15; // Larger loss for losing against lower/equal Elo
+                        } else {
+                            eloChange = -8; // Smaller loss for losing against higher Elo
                         }
-                    } else { // AI game or other default loss (only hard AI impacts stats)
-                        eloChange = -5;
+                    } else {
+                        eloChange = -5; // Default loss for AI hard mode or if opponent Elo is unknown
                     }
                 } else if (gameResult === 'draw') {
                     currentProfile.draws = (currentProfile.draws || 0) + 1;
-                    eloChange = 1; // Draw always +1
+                    eloChange = 1; // Small Elo gain for a draw
                 }
 
                 currentProfile.elo = Math.max(0, (currentProfile.elo || 0) + eloChange);
@@ -863,10 +1256,9 @@
 
                 await setDoc(userProfileRef, currentProfile);
                 console.log("Firebase: User profile updated successfully.", currentProfile);
-                // Only update the main profile display if it's the current user's profile
                 if (userId === currentUserId) {
-                    userProfileData = currentProfile; // Update global userProfileData
-                    displayUserProfile(userId, currentProfile);
+                    userProfileData = currentProfile; // Update global user profile data
+                    displayUserProfile(userId, currentProfile); // Update UI immediately
                 }
             } catch (error) {
                 console.error("Firebase: Erreur lors de la mise à jour du profil utilisateur :", error);
@@ -874,19 +1266,38 @@
             }
         }
 
-        // --- DOM Elements for Username Management ---
-        const profileUsername = document.getElementById('profile-username');
-        const changeUsernameButton = document.getElementById('change-username-button');
-        const usernameEditSection = document.getElementById('username-edit-section');
-        const newUsernameInput = document.getElementById('new-username-input');
-        const saveUsernameButton = document.getElementById('save-username-button');
-        const cancelUsernameButton = document.getElementById('cancel-username-button');
-        const usernameCooldownMessage = document.getElementById('username-cooldown-message');
+        // --- Presence / Last Online ---
+        async function setupPresenceListener() {
+            if (!db || !currentUserId) return;
+
+            const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data');
+
+            // Update lastOnline timestamp every minute
+            setInterval(async () => {
+                if (currentUserId) { // Ensure user is still signed in
+                    try {
+                        await updateDoc(userProfileRef, { lastOnline: serverTimestamp() });
+                    } catch (e) {
+                        console.error("Erreur lors de la mise à jour de lastOnline:", e);
+                    }
+                }
+            }, 60 * 1000); // Every 60 seconds (1 minute)
+
+            // Update lastOnline when user closes/leaves the page (best effort)
+            window.addEventListener('beforeunload', async () => {
+                if (currentUserId) {
+                    try {
+                        await updateDoc(userProfileRef, { lastOnline: serverTimestamp() });
+                    } catch (e) {
+                        console.error("Erreur lors de la mise à jour de lastOnline à la fermeture:", e);
+                    }
+                }
+            });
+        }
 
         function displayUserProfile(userId, profile) {
-            // This function is for displaying the CURRENT user's profile on the home screen
             document.getElementById('user-id-display').textContent = userId;
-            profileUsername.textContent = profile.username; // Display username
+            profileUsername.textContent = profile.username;
             document.getElementById('profile-elo').textContent = profile.elo;
             document.getElementById('profile-level').textContent = `${profile.level}/${MAX_LEVEL}`;
             document.getElementById('profile-games-played').textContent = profile.gamesPlayed;
@@ -894,12 +1305,12 @@
             document.getElementById('profile-losses').textContent = profile.losses;
             document.getElementById('profile-draws').textContent = profile.draws;
 
-            // Cooldown logic for username change
             const fifteenDaysInMs = 15 * 24 * 60 * 60 * 1000;
             const now = Date.now();
 
+            // Check if lastUsernameChange exists and is a Firestore Timestamp
             if (profile.lastUsernameChange && profile.lastUsernameChange instanceof Object && 'toDate' in profile.lastUsernameChange) {
-                const lastChangeDate = profile.lastUsernameChange.toDate(); // Convert Firestore Timestamp to Date
+                const lastChangeDate = profile.lastUsernameChange.toDate();
                 const nextChangeAllowed = lastChangeDate.getTime() + fifteenDaysInMs;
 
                 if (now < nextChangeAllowed) {
@@ -915,21 +1326,27 @@
                     changeUsernameButton.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
             } else {
-                // No previous change, allow immediate change
+                // If lastUsernameChange is null or not a valid timestamp, allow change
                 usernameCooldownMessage.classList.add('hidden');
                 changeUsernameButton.disabled = false;
                 changeUsernameButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
 
-
         // --- Username Change Functions ---
+        const profileUsername = document.getElementById('profile-username');
+        const changeUsernameButton = document.getElementById('change-username-button');
+        const usernameEditSection = document.getElementById('username-edit-section');
+        const newUsernameInput = document.getElementById('new-username-input');
+        const saveUsernameButton = document.getElementById('save-username-button');
+        const cancelUsernameButton = document.getElementById('cancel-username-button');
+        const usernameCooldownMessage = document.getElementById('username-cooldown-message');
+
         function showUsernameEditForm() {
             changeUsernameButton.classList.add('hidden');
             usernameEditSection.classList.remove('hidden');
-            newUsernameInput.value = profileUsername.textContent; // Pre-fill with current username
+            newUsernameInput.value = profileUsername.textContent;
 
-            // Re-check cooldown when opening edit form
             const fifteenDaysInMs = 15 * 24 * 60 * 60 * 1000;
             const now = Date.now();
 
@@ -979,8 +1396,7 @@
         function cancelUsernameEdit() {
             usernameEditSection.classList.add('hidden');
             changeUsernameButton.classList.remove('hidden');
-            // Re-apply cooldown status if needed
-            displayUserProfile(currentUserId, userProfileData);
+            displayUserProfile(currentUserId, userProfileData); // Re-display current profile data
         }
 
         async function updateUsername(newUsername) {
@@ -991,7 +1407,6 @@
 
             const userProfileRef = doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data');
 
-            // Re-fetch current profile to get the latest lastUsernameChange
             const docSnap = await getDoc(userProfileRef);
             let currentProfile = docSnap.exists() ? docSnap.data() : { ...defaultUserProfile };
 
@@ -1012,12 +1427,11 @@
             try {
                 await updateDoc(userProfileRef, {
                     username: newUsername,
-                    lastUsernameChange: serverTimestamp() // Update timestamp on successful change
+                    lastUsernameChange: serverTimestamp() // Set timestamp for cooldown
                 });
                 showMessage("Pseudo mis à jour avec succès !");
-                // Re-fetch and display profile to update the UI and cooldown status
-                userProfileData = await fetchUserProfile(currentUserId);
-                displayUserProfile(currentUserId, userProfileData);
+                userProfileData = await fetchUserProfile(currentUserId); // Re-fetch to update local cache
+                displayUserProfile(currentUserId, userProfileData); // Update UI
             } catch (error) {
                 console.error("Erreur lors de la mise à jour du pseudo:", error);
                 showMessage("Erreur lors de la mise à jour du pseudo: " + error.message);
@@ -1034,17 +1448,17 @@
         const aiGameScreen = document.getElementById('ai-game-screen');
         const onlineSearchingScreen = document.getElementById('online-searching-screen');
         const onlineGameScreen = document.getElementById('online-game-screen');
-        const gameEndOverlay = document.getElementById('game-end-overlay'); // New overlay container
-        const gameEndBanner = document.getElementById('game-end-banner'); // The actual banner
+        const gameEndOverlay = document.getElementById('game-end-overlay');
+        const gameEndBanner = document.getElementById('game-end-banner');
         const gameEndTitle = document.getElementById('game-end-title');
         const gameEndMessage = document.getElementById('game-end-message');
         const gameEndReplayButton = document.getElementById('game-end-replay-button');
         const gameEndHomeButton = document.getElementById('game-end-home-button');
-        const leaderboardScreen = document.getElementById('leaderboard-screen'); // Nouvelle référence
-        const leaderboardList = document.getElementById('leaderboard-list'); // Nouvelle référence
-        const historyScreen = document.getElementById('history-screen'); // Nouvelle référence pour l'historique
-        const gamesHistoryList = document.getElementById('games-history-list'); // Liste des parties de l'historique
-        const historyDetailScreen = document.getElementById('history-detail-screen'); // New detail screen
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const leaderboardList = document.getElementById('leaderboard-list');
+        const historyScreen = document.getElementById('history-screen');
+        const gamesHistoryList = document.getElementById('games-history-list');
+        const historyDetailScreen = document.getElementById('history-detail-screen');
         const detailGameInfo = document.getElementById('detail-game-info');
         const detailBoardElement = document.getElementById('detail-board');
         const prevMoveButton = document.getElementById('prev-move-button');
@@ -1052,14 +1466,58 @@
         const moveCounter = document.getElementById('move-counter');
         const detailBackButton = document.getElementById('detail-back-button');
 
+        // NOUVEAUX ÉLÉMENTS DU DOM POUR LE SYSTÈME D'AMIS ET CHAT
+        const showFriendsButton = document.getElementById('showFriendsButton');
+        const friendsScreen = document.getElementById('friends-screen');
+        const friendsBackToHomeButton = document.getElementById('friends-back-to-home-button');
+        const userSearchInput = document.getElementById('user-search-input');
+        const userSearchButton = document.getElementById('user-search-button');
+        const userSearchResults = document.getElementById('user-search-results');
+        const friendsListElement = document.getElementById('friends-list');
+
+        const userProfileModalOverlay = document.getElementById('user-profile-modal-overlay');
+        const userProfileModalCloseButton = document.getElementById('user-profile-modal-close');
+        const modalProfileUsername = document.getElementById('modal-profile-username');
+        const modalProfileId = document.getElementById('modal-profile-id');
+        const modalProfileLastOnline = document.getElementById('modal-profile-last-online');
+        const modalProfileElo = document.getElementById('modal-profile-elo');
+        const modalProfileLevel = document.getElementById('modal-profile-level');
+        const modalProfileGamesPlayed = document.getElementById('modal-profile-games-played');
+        const modalProfileWins = document.getElementById('modal-profile-wins');
+        const modalProfileLosses = document.getElementById('modal-profile-losses');
+        const modalProfileDraws = document.getElementById('modal-profile-draws');
+
+        const sendFriendRequestButton = document.getElementById('send-friend-request-button');
+        const cancelFriendRequestButton = document.getElementById('cancel-friend-request-button');
+        const acceptFriendRequestButton = document.getElementById('accept-friend-request-button');
+        const declineFriendRequestButton = document.getElementById('decline-friend-request-button');
+        const unfriendButton = document.getElementById('unfriend-button');
+        const blockUserButton = document.getElementById('block-user-button');
+        const unblockUserButton = document.getElementById('unblock-user-button');
+        const proposeGameButton = document.getElementById('propose-game-button');
+        const openChatButton = document.getElementById('open-chat-button');
+
+        const notificationButton = document.getElementById('notification-button');
+        const notificationCount = document.getElementById('notification-count');
+        const notificationModalOverlay = document.getElementById('notification-modal-overlay');
+        const notificationModalCloseButton = document.getElementById('notification-modal-close');
+        const notificationList = document.getElementById('notification-list');
+
+        const chatModalOverlay = document.getElementById('chat-modal-overlay');
+        const chatModalCloseButton = document.getElementById('chat-modal-close');
+        const chatPartnerName = document.getElementById('chat-partner-name');
+        const chatMessagesDiv = document.getElementById('chat-messages');
+        const chatMessageInput = document.getElementById('chat-message-input');
+        const sendChatMessageButton = document.getElementById('send-chat-message-button');
+
 
         const playOnlineButton = document.getElementById('playOnlineButton');
         const playLocalButton = document.getElementById('playLocalButton');
         const playAIButton = document.getElementById('playAIButton');
-        const showHistoryButton = document.getElementById('showHistoryButton'); // Référence au bouton Historique sous le profil
-        const showLeaderboardButton = document.getElementById('showLeaderboardButton'); // Référence au bouton Classement dans la nav
-        const leaderboardBackToHomeButton = document.getElementById('leaderboard-back-to-home-button'); // Bouton retour depuis classement
-        const historyBackButton = document.getElementById('history-back-button'); // Bouton retour depuis l'historique
+        const showHistoryButton = document.getElementById('showHistoryButton');
+        const showLeaderboardButton = document.getElementById('showLeaderboardButton');
+        const leaderboardBackToHomeButton = document.getElementById('leaderboard-back-to-home-button');
+        const historyBackButton = document.getElementById('history-back-button');
 
 
         // --- Variables et éléments du DOM pour le jeu local ---
@@ -1072,7 +1530,7 @@
         let localCurrentPlayer = 'X';
         let localGameActive = true;
         let localCells;
-        let localMovesHistory = []; // To store moves for history replay
+        let localMovesHistory = [];
 
         // --- Variables et éléments du DOM pour le jeu IA ---
         const aiStatusDisplay = document.getElementById('ai-game-status');
@@ -1092,7 +1550,7 @@
         let aiDifficulty = null;
         const MINIMAX_MAX_DEPTH = 4;
         let aiCells;
-        let aiMovesHistory = []; // To store moves for history replay
+        let aiMovesHistory = [];
 
         // --- Constantes de jeu communes ---
         const BOARD_SIZE = 5;
@@ -1145,7 +1603,9 @@
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
                 cell.dataset.index = i;
-                cell.addEventListener('click', clickHandler);
+                if (clickHandler) { // Only add if a handler is provided
+                    cell.addEventListener('click', clickHandler);
+                }
                 currentBoardElement.appendChild(cell);
             }
             if (boardElementId === 'local-board') {
@@ -1181,40 +1641,38 @@
         };
 
         // --- Fonctions communes pour les écrans de fin de partie ---
-        let currentEndGameType = ''; // 'local', 'ai', 'online'
-        let currentOpponentName = ''; // Global variable to store opponent name for history
-        const playerXMarker = 'X'; // Assuming 'X' is always "my" player or Player 1 for history context
-
+        let currentEndGameType = '';
+        let currentOpponentName = '';
+        const playerXMarker = 'X';
 
         function showGameEndScreen(status, winner, gameType, finalBoardState, movesHistory) {
-            // Hide all game screens, but not home/leaderboard/history
             localGameScreen.classList.add('hidden');
             aiGameScreen.classList.add('hidden');
             onlineGameScreen.classList.add('hidden');
             onlineSearchingScreen.classList.add('hidden');
 
-            gameEndOverlay.classList.remove('hidden'); // Show the overlay
-            gameEndBanner.classList.remove('hidden'); // Show the banner
+            gameEndOverlay.classList.remove('hidden');
+            gameEndBanner.classList.remove('hidden');
 
             gameEndTitle.textContent = '';
             gameEndMessage.textContent = '';
-            currentEndGameType = gameType; // Stocke le type de jeu pour les boutons
+            currentEndGameType = gameType;
 
             let title = '';
             let message = '';
-            let historyStatus = ''; // Status to save to history
+            let historyStatus = '';
 
             if (gameType === 'local') {
                 if (status === 'win') {
                     title = 'PARTIE TERMINÉE !';
                     message = `Le joueur ${winner} a gagné !`;
-                    historyStatus = (winner === playerXMarker) ? 'won' : 'lost'; // For local, X is player 1
-                } else { // draw
+                    historyStatus = (winner === playerXMarker) ? 'won' : 'lost';
+                } else {
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
                     historyStatus = 'draw';
                 }
-                currentOpponentName = 'Joueur Local'; // Set opponent for history
+                currentOpponentName = 'Joueur Local';
             } else if (gameType === 'ai') {
                 if (status === 'win') {
                     title = 'VICTOIRE !';
@@ -1224,12 +1682,12 @@
                     title = 'DÉFAITE !';
                     message = `L'IA a gagné.`;
                     historyStatus = 'lost';
-                } else { // draw
+                } else {
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
                     historyStatus = 'draw';
                 }
-                currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`; // Set opponent for history
+                currentOpponentName = `IA ${aiDifficulty === 'easy' ? 'Facile' : (aiDifficulty === 'medium' ? 'Moyenne' : 'Difficile')}`;
             } else if (gameType === 'online') {
                 if (status === 'win') {
                     title = 'VICTOIRE !';
@@ -1239,18 +1697,18 @@
                     title = 'DÉFAITE !';
                     message = `${onlineOpponentProfile ? onlineOpponentProfile.username : 'Votre adversaire'} a gagné.`;
                     historyStatus = 'lost';
-                } else { // draw
+                } else {
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
                     historyStatus = 'draw';
                 }
-                currentOpponentName = onlineOpponentProfile ? onlineOpponentProfile.username : 'Joueur en ligne'; // Set opponent for history
+                currentOpponentName = onlineOpponentProfile ? onlineOpponentProfile.username : 'Joueur en ligne';
             }
 
             gameEndTitle.textContent = title;
             gameEndMessage.textContent = message;
 
-            // Update profile stats for AI (hard) and Online games
+            // Update user stats for online games and hard AI games
             if (isAuthReady && currentUserId) {
                 if (gameType === 'ai' && aiDifficulty === 'hard') {
                     updateUserProfileStats(currentUserId, status);
@@ -1259,8 +1717,6 @@
                 }
             }
 
-            // Save game to history
-            // For online games, the movesHistory passed here should already be complete due to getDoc in onSnapshot
             saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, movesHistory, BOARD_SIZE, currentOnlineGameId);
         }
 
@@ -1275,7 +1731,7 @@
             localBoard[clickedCellIndex] = localCurrentPlayer;
             localCells[clickedCellIndex].innerHTML = localCurrentPlayer;
             localCells[clickedCellIndex].classList.add(localCurrentPlayer.toLowerCase());
-            localMovesHistory.push({ index: clickedCellIndex, player: localCurrentPlayer }); // Record the move
+            localMovesHistory.push({ index: clickedCellIndex, player: localCurrentPlayer });
 
             const hasWon = checkForWin(localCurrentPlayer, localBoard);
             if (hasWon) {
@@ -1299,20 +1755,18 @@
             localBoard = Array(25).fill('');
             localCurrentPlayer = 'X';
             localGameActive = true;
-            localMovesHistory = []; // Reset moves history
+            localMovesHistory = [];
             updateStatus(`Au tour de : ${localCurrentPlayer}`, 'local');
             localCells.forEach(cell => {
                 cell.innerHTML = '';
                 cell.classList.remove('x', 'o');
             });
-            // Ensure the board is visible again if coming from game end screen
             localGameScreen.classList.remove('hidden');
         };
 
         const leaveLocalGame = () => {
             hideAllScreens();
             homeScreen.classList.remove('hidden');
-            // Re-display current user's profile on returning to home
             if (isAuthReady && currentUserId) {
                 fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
             }
@@ -1328,7 +1782,7 @@
             }
 
             makeAIMoveInternal(clickedCellIndex, humanPlayer);
-            aiMovesHistory.push({ index: clickedCellIndex, player: humanPlayer }); // Record the move
+            aiMovesHistory.push({ index: clickedCellIndex, player: humanPlayer });
             checkAIGameStatus();
         };
 
@@ -1613,7 +2067,7 @@
 
             if (move !== null) {
                 makeAIMoveInternal(move, aiPlayer);
-                aiMovesHistory.push({ index: move, player: aiPlayer }); // Record the move
+                aiMovesHistory.push({ index: move, player: aiPlayer });
                 checkAIGameStatus();
             }
         };
@@ -1622,26 +2076,23 @@
             aiBoard = Array(25).fill('');
             aiCurrentPlayer = humanPlayer;
             aiGameActive = true;
-            aiMovesHistory = []; // Reset moves history
+            aiMovesHistory = [];
             updateStatus(`Au tour de : ${aiCurrentPlayer}`, 'ai');
             aiCells.forEach(cell => {
                 cell.innerHTML = '';
                 cell.classList.remove('x', 'o');
             });
-            // Ensure the board is visible again if coming from game end screen
             aiGameScreen.classList.remove('hidden');
-            // Re-select difficulty button visually
             if (aiDifficulty) {
                 document.getElementById(`${aiDifficulty}-button`).classList.add('selected-difficulty');
             }
         };
 
         const leaveAIGame = () => {
-            aiDifficulty = null; // Reset difficulty
+            aiDifficulty = null;
             difficultyButtons.forEach(button => button.classList.remove('selected-difficulty'));
             hideAllScreens();
             homeScreen.classList.remove('hidden');
-            // Re-display current user's profile on returning to home
             if (isAuthReady && currentUserId) {
                 fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
             }
@@ -1701,7 +2152,7 @@
                         winner: null,
                         createdAt: serverTimestamp(),
                         lastMoveTime: serverTimestamp(),
-                        moves: [] // Initialize moves array for replay
+                        moves: []
                     });
 
                     await updateDoc(foundOpponentDocRef, {
@@ -1784,7 +2235,7 @@
             console.log(`Starting online game: ${gameId} as player ${playerRole} against ${opponentId}`);
             currentOnlineGameId = gameId;
             currentOnlinePlayerRole = playerRole;
-            onlineOpponentUserId = opponentId; // Store opponent's ID
+            onlineOpponentUserId = opponentId;
             onlineGameActive = true;
             onlineBoard = Array(25).fill('');
             onlineCurrentTurn = 'X';
@@ -1795,7 +2246,7 @@
             document.getElementById('online-player-role').textContent = playerRole;
 
             // Fetch opponent's profile to display their username, Elo, and level
-            onlineOpponentProfile = await fetchUserProfile(onlineOpponentUserId); // Fetch opponent's profile
+            onlineOpponentProfile = await fetchUserProfile(onlineOpponentUserId);
             if (onlineOpponentProfile) {
                 document.getElementById('online-opponent-username').textContent = onlineOpponentProfile.username || 'Inconnu';
                 document.getElementById('online-opponent-elo').textContent = onlineOpponentProfile.elo || 'N/A';
@@ -1812,11 +2263,11 @@
             resetOnlineBoardUI();
 
             const gameRef = doc(db, 'games', gameId);
-            onlineGameListenerUnsubscribe = onSnapshot(gameRef, async (docSnap) => { // Make async
+            onlineGameListenerUnsubscribe = onSnapshot(gameRef, async (docSnap) => {
                 if (docSnap.exists()) {
                     const gameData = docSnap.data();
                     console.log("Online game update received:", gameData);
-                    console.log("Received gameData.moves:", gameData.moves); // Log all moves received from Firestore
+                    console.log("Received gameData.moves:", gameData.moves);
                     console.log("Current User ID (in listener):", currentUserId);
                     console.log("Current Player Role (in listener):", currentOnlinePlayerRole);
 
@@ -1835,23 +2286,21 @@
 
                     if (gameData.status === 'finished' || gameData.status === 'abandoned') {
                         onlineGameActive = false;
-                        // Unsubscribe immediately to prevent further updates
                         if (onlineGameListenerUnsubscribe) {
                             onlineGameListenerUnsubscribe();
                             onlineGameListenerUnsubscribe = null;
                         }
 
-                        // Fetch the final game document to ensure we have the complete moves array
-                        // This is crucial for history replay.
+                        // Fetch the final game data one last time to ensure we have the complete moves history
                         const finalGameDocSnap = await getDoc(gameRef);
-                        const finalGameData = finalGameDocSnap.exists() ? finalGameDocSnap.data() : gameData; // Fallback to current gameData
+                        const finalGameData = finalGameDocSnap.exists() ? finalGameDocSnap.data() : gameData;
 
                         let statusToShow = '';
                         if (gameData.winner === currentOnlinePlayerRole) {
                             statusToShow = 'win';
                         } else if (gameData.winner === 'draw') {
                             statusToShow = 'draw';
-                        } else { // Opponent won or game abandoned by opponent
+                        } else {
                             statusToShow = 'loss';
                         }
 
@@ -1926,15 +2375,12 @@
         }
 
         async function resetOnlineGame() {
-            // Reinitialize game state for the current player
             onlineBoard = Array(25).fill('');
             onlineCurrentTurn = 'X';
             onlineGameActive = true;
             resetOnlineBoardUI();
             updateStatus(`Au tour de : X`, 'online');
-
-            // Find a new match
-            findOnlineMatch();
+            findOnlineMatch(); // Start a new matchmaking search
         }
 
         async function leaveOnlineGame() {
@@ -1946,33 +2392,32 @@
                 try {
                     const gameDoc = await getDoc(doc(db, 'games', currentOnlineGameId));
                     if (gameDoc.exists() && gameDoc.data().status === 'active') {
-                        // Mark game as abandoned, setting the OTHER player as winner
+                        // Mark game as abandoned and assign win to opponent
                         await updateDoc(doc(db, 'games', currentOnlineGameId), {
                             status: 'abandoned',
-                            winner: currentOnlinePlayerRole === 'X' ? 'O' : 'X',
+                            winner: currentOnlinePlayerRole === 'X' ? 'O' : 'X', // Opponent wins
                             lastMoveTime: serverTimestamp()
                         });
                         console.log("Partie en ligne marquée comme abandonnée.");
-                        // Only update stats if we were the one abandoning an active game
+                        // Update current user's stats for a loss
                         updateUserProfileStats(currentUserId, 'loss', onlineOpponentProfile ? onlineOpponentProfile.elo : null);
                     }
-                    // If game was already finished/abandoned, no need to update status
                 } catch (error) {
                     console.error("Erreur lors de la tentative d'abandon de partie:", error);
                 }
             }
 
+            // Reset online game state variables
             currentOnlineGameId = null;
             currentOnlinePlayerRole = null;
-            onlineOpponentUserId = null; // Clear opponent ID
-            onlineOpponentProfile = null; // Clear opponent profile
+            onlineOpponentUserId = null;
+            onlineOpponentProfile = null;
             onlineGameActive = false;
             onlineBoard = Array(25).fill('');
             onlineCurrentTurn = 'X';
 
             hideAllScreens();
             homeScreen.classList.remove('hidden');
-            // Re-display current user's profile on returning to home
             if (isAuthReady && currentUserId) {
                 fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
             }
@@ -1989,32 +2434,27 @@
             leaderboardList.innerHTML = '<div class="text-center p-4 text-gray-500">Chargement du classement...</div>';
 
             try {
-                // Pour récupérer tous les documents sous les sous-collections 'profile/data' de chaque utilisateur,
-                // nous devons d'abord lister tous les documents utilisateur dans la collection 'users',
-                // puis récupérer la sous-collection 'profile/data' pour chacun.
                 const usersCollectionRef = collection(db, `artifacts/${appId}/users`);
-                const usersSnapshot = await getDocs(usersCollectionRef); // Ceci lit les documents parents (userId)
-                console.log("Firebase: Nombre de documents parents utilisateur trouvés :", usersSnapshot.docs.length); // Log pour le débogage
+                const usersSnapshot = await getDocs(usersCollectionRef);
+                console.log("Firebase: Nombre de documents parents utilisateur trouvés :", usersSnapshot.docs.length);
 
                 const users = [];
 
-                // Pour chaque document utilisateur (qui est juste un conteneur pour les sous-collections)
                 for (const userDoc of usersSnapshot.docs) {
-                    const profileDocRef = doc(userDoc.ref, 'profile', 'data'); // Accéder à la sous-collection 'profile/data'
-                    const profileSnap = await getDoc(profileDocRef); // Lire le document 'data' dans la sous-collection
+                    const profileDocRef = doc(userDoc.ref, 'profile', 'data');
+                    const profileSnap = await getDoc(profileDocRef);
 
                     if (profileSnap.exists()) {
                         const profileData = profileSnap.data();
                         users.push({
-                            id: userDoc.id, // L'ID de l'utilisateur
+                            id: userDoc.id,
                             username: profileData.username || 'Joueur Inconnu',
                             elo: profileData.elo || 0
                         });
                     }
                 }
 
-                // Trier les utilisateurs par Elo (du plus élevé au plus bas)
-                users.sort((a, b) => b.elo - a.elo);
+                users.sort((a, b) => b.elo - a.elo); // Sort by Elo descending
 
                 displayLeaderboard(users);
 
@@ -2026,7 +2466,7 @@
         }
 
         function displayLeaderboard(users) {
-            leaderboardList.innerHTML = ''; // Clear loading message
+            leaderboardList.innerHTML = '';
 
             if (users.length === 0) {
                 leaderboardList.innerHTML = '<div class="text-center p-4 text-gray-500">Aucun joueur dans le classement pour le moment.</div>';
@@ -2037,6 +2477,7 @@
                 const rank = index + 1;
                 const listItem = document.createElement('div');
                 listItem.classList.add('leaderboard-item');
+                listItem.dataset.userId = user.id; // Store user ID for click handler
 
                 if (rank === 1) {
                     listItem.classList.add('top-1');
@@ -2049,6 +2490,7 @@
                     <span class="username">${user.username}</span>
                     <span class="elo">${user.elo} Elo</span>
                 `;
+                listItem.addEventListener('click', () => showUserProfileModal(user.id));
                 leaderboardList.appendChild(listItem);
             });
         }
@@ -2056,28 +2498,17 @@
         function showLeaderboardScreen() {
             hideAllScreens();
             leaderboardScreen.classList.remove('hidden');
-            fetchLeaderboard(); // Charger le classement à chaque fois qu'on y accède
+            fetchLeaderboard();
         }
 
         // --- Fonctions de gestion de l'historique des parties ---
         const HISTORY_STORAGE_KEY = 'oxoArenaGameHistory';
         const MAX_HISTORY_ITEMS = 10;
 
-        /**
-         * Saves a completed game to local storage.
-         * @param {string} mode - 'local', 'ai', 'online'
-         * @param {string} finalStatus - 'won', 'lost', 'draw' (from perspective of player X)
-         * @param {string} opponent - Name of the opponent (e.g., 'IA Facile', 'Joueur Local', 'Joueur en ligne')
-         * @param {Array<string|null>} finalBoardState - The final state of the board
-         * @param {Array<{index: number, player: string}>} movesHistory - Array of moves for replay
-         * @param {number} boardSize - The size of the board (currently always 5)
-         * @param {string|null} gameId - The ID of the online game, or null for local/AI
-         */
         function saveGameToHistory(mode, finalStatus, opponent, finalBoardState, movesHistory, boardSize, gameId = null) {
             let history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
 
-            // Check for existing online game entry to prevent duplicates
-            // For online games, use the unique gameId to prevent saving duplicates
+            // Prevent duplicate entries for online games if they are already saved by the listener
             if (gameId) {
                 if (history.some(game => game.gameId === gameId)) {
                     console.log(`Partie en ligne ${gameId} déjà sauvegardée dans l'historique local. Ignoré.`);
@@ -2086,18 +2517,18 @@
             }
 
             const newGame = {
-                id: gameId || Date.now().toString(), // Use gameId if available, otherwise timestamp
+                id: gameId || Date.now().toString(), // Use gameId for online, timestamp for local/AI
                 mode: mode,
                 date: new Date().toLocaleString(),
                 opponent: opponent,
-                status: finalStatus, // 'won', 'lost', 'draw'
+                status: finalStatus,
                 finalBoard: finalBoardState,
-                moves: movesHistory, // Store the full moves history
+                moves: movesHistory,
                 boardSize: boardSize,
                 gameId: gameId // Store gameId for online games
             };
-            history.unshift(newGame); // Add to the beginning (most recent first)
-            history = history.slice(0, MAX_HISTORY_ITEMS); // Keep only the last 10
+            history.unshift(newGame); // Add to the beginning
+            history = history.slice(0, MAX_HISTORY_ITEMS); // Keep only the last MAX_HISTORY_ITEMS
             localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
             console.log("Partie sauvegardée dans l'historique local:", newGame);
         }
@@ -2109,7 +2540,7 @@
         }
 
         function renderGameHistory() {
-            gamesHistoryList.innerHTML = ''; // Clear previous entries
+            gamesHistoryList.innerHTML = '';
             const history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
 
             if (history.length === 0) {
@@ -2120,14 +2551,12 @@
             history.forEach(game => {
                 const gameItem = document.createElement('div');
                 gameItem.className = 'bg-gray-50 p-4 rounded-lg shadow flex flex-col items-start space-y-2 cursor-pointer hover:bg-gray-100 transition-colors';
-                gameItem.dataset.gameId = game.id; // Store game ID for click handler
+                gameItem.dataset.gameId = game.id;
 
-                // Attach click listener to show detail
                 gameItem.addEventListener('click', () => showHistoryDetail(game));
 
                 let statusClass = '';
                 let statusText = '';
-                // Determine status from the perspective of player X (player 1)
                 if (game.status === 'won') {
                     statusClass = 'text-green-600';
                     statusText = 'Victoire';
@@ -2155,22 +2584,20 @@
         }
 
         function createMiniBoardHTML(boardState, boardSize) {
-            const cellSizePx = 20; // Base size for font, actual cell size will be determined by grid
-            const gapPx = 1; // Small gap for visual separation
+            const cellSizePx = 20;
+            const gapPx = 1;
 
-            // Use Tailwind classes for responsive width and aspect ratio
             let boardHTML = `<div class="grid w-full aspect-square bg-gray-300 border border-gray-400 rounded-sm overflow-hidden" style="grid-template-columns: repeat(${boardSize}, 1fr); gap: ${gapPx}px;">`;
             boardState.forEach(cell => {
                 let content = '';
                 let cellClass = '';
                 if (cell === 'X') {
                     content = 'X';
-                    cellClass = 'text-[#FFD700]'; /* Jaune doré pour X */
+                    cellClass = 'text-[#FFD700]';
                 } else if (cell === 'O') {
                     content = 'O';
-                    cellClass = 'text-[#1A2B3C]'; /* Bleu foncé pour O */
+                    cellClass = 'text-[#1A2B3C]';
                 }
-                // Removed fixed width/height from cell, letting grid handle it. Font size remains relative.
                 boardHTML += `<div class="flex items-center justify-center bg-white font-bold ${cellClass}" style="font-size: ${cellSizePx * 0.8}px;">${content}</div>`;
             });
             boardHTML += `</div>`;
@@ -2179,13 +2606,12 @@
 
         // --- History Detail Screen Logic ---
         let currentDetailGameMoves = [];
-        let currentDetailMoveIndex = -1; // -1 means initial empty board
+        let currentDetailMoveIndex = -1;
 
         function showHistoryDetail(gameData) {
             hideAllScreens();
             historyDetailScreen.classList.remove('hidden');
 
-            // Populate game info
             document.getElementById('detail-mode').textContent = gameData.mode === 'local' ? 'Local' : (gameData.mode === 'ai' ? 'Vs IA' : 'En ligne');
             document.getElementById('detail-date').textContent = gameData.date;
             document.getElementById('detail-opponent').textContent = gameData.opponent;
@@ -2195,9 +2621,8 @@
             else statusText = 'Nul';
             document.getElementById('detail-status').textContent = statusText;
 
-            // Initialize board and moves
-            createCells('detail-board', () => {}); // No click handler for replay board
-            currentDetailGameMoves = gameData.moves || []; // Ensure it's an array
+            createCells('detail-board', null); // Create cells without click handler
+            currentDetailGameMoves = gameData.moves || [];
             currentDetailMoveIndex = -1; // Start before the first move
             updateDetailBoardDisplay();
         }
@@ -2206,7 +2631,7 @@
             const tempBoard = Array(BOARD_SIZE * BOARD_SIZE).fill('');
             for (let i = 0; i <= currentDetailMoveIndex; i++) {
                 const move = currentDetailGameMoves[i];
-                if (move) { // Check if move exists (might be null/undefined if moves array is sparse)
+                if (move) {
                     tempBoard[move.index] = move.player;
                 }
             }
@@ -2235,19 +2660,717 @@
             aiGameScreen.classList.add('hidden');
             onlineSearchingScreen.classList.add('hidden');
             onlineGameScreen.classList.add('hidden');
-            gameEndOverlay.classList.add('hidden'); // Hide the overlay
-            gameEndBanner.classList.add('hidden'); // Hide the banner
-            leaderboardScreen.classList.add('hidden'); // Cacher le classement
-            historyScreen.classList.add('hidden'); // Cacher l'historique
-            historyDetailScreen.classList.add('hidden'); // Hide detail screen
+            gameEndOverlay.classList.add('hidden');
+            gameEndBanner.classList.add('hidden');
+            leaderboardScreen.classList.add('hidden');
+            historyScreen.classList.add('hidden');
+            historyDetailScreen.classList.add('hidden');
+            friendsScreen.classList.add('hidden'); // Hide friends screen
+            userProfileModalOverlay.classList.add('hidden'); // Hide profile modal
+            notificationModalOverlay.classList.add('hidden'); // Hide notification modal
+            chatModalOverlay.classList.add('hidden'); // Hide chat modal
         }
 
+        // --- FRIEND SYSTEM FUNCTIONS ---
+
+        // Utility to get ordered user IDs for consistent document IDs
+        function getOrderedUserIds(userId1, userId2) {
+            return userId1 < userId2 ? { user1Id: userId1, user2Id: userId2 } : { user1Id: userId2, user2Id: userId1 };
+        }
+
+        // Function to fetch all user profiles (for search and friends list display)
+        async function fetchAllUserProfiles() {
+            if (!db || !isAuthReady) {
+                console.warn("Firebase non prêt pour la récupération des profils.");
+                return;
+            }
+            try {
+                const usersCollectionRef = collection(db, `artifacts/${appId}/users`);
+                const querySnapshot = await getDocs(usersCollectionRef);
+                allUserProfiles = {}; // Clear previous data
+                for (const userDoc of querySnapshot.docs) {
+                    const profileDocRef = doc(userDoc.ref, 'profile', 'data');
+                    const profileSnap = await getDoc(profileDocRef);
+                    if (profileSnap.exists()) {
+                        allUserProfiles[userDoc.id] = { id: userDoc.id, ...profileSnap.data() };
+                    }
+                }
+                console.log("Tous les profils utilisateurs chargés:", Object.keys(allUserProfiles).length);
+            } catch (error) {
+                console.error("Erreur lors du chargement de tous les profils utilisateurs:", error);
+                showMessage("Erreur lors du chargement des profils pour la recherche: " + error.message);
+            }
+        }
+
+        // Function to display a user's profile in the modal
+        async function showUserProfileModal(targetUserId) {
+            if (!db || !currentUserId || !isAuthReady || targetUserId === currentUserId) {
+                // If trying to view own profile, or not ready, just show main profile or do nothing
+                if (targetUserId === currentUserId) {
+                    hideAllScreens();
+                    homeScreen.classList.remove('hidden');
+                    return;
+                }
+                showMessage("Impossible d'afficher le profil. Connexion ou ID invalide.");
+                return;
+            }
+
+            // Try to get profile from cache, otherwise fetch
+            const targetProfile = allUserProfiles[targetUserId] || await fetchUserProfile(targetUserId);
+            if (!targetProfile) {
+                showMessage("Profil utilisateur introuvable.");
+                return;
+            }
+
+            // Update modal content
+            modalProfileUsername.textContent = targetProfile.username || 'Inconnu';
+            modalProfileId.textContent = targetUserId;
+            modalProfileElo.textContent = targetProfile.elo || 0;
+            modalProfileLevel.textContent = `${targetProfile.level || 0}/${MAX_LEVEL}`;
+            modalProfileGamesPlayed.textContent = targetProfile.gamesPlayed || 0;
+            modalProfileWins.textContent = targetProfile.wins || 0;
+            modalProfileLosses.textContent = targetProfile.losses || 0;
+            modalProfileDraws.textContent = targetProfile.draws || 0;
+
+            // Display last online status
+            if (targetProfile.lastOnline && targetProfile.lastOnline instanceof Object && 'toDate' in targetProfile.lastOnline) {
+                const lastOnlineDate = targetProfile.lastOnline.toDate();
+                const now = new Date();
+                const diffMs = now.getTime() - lastOnlineDate.getTime();
+                const minutes = Math.floor(diffMs / (1000 * 60));
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+
+                let statusText = '';
+                if (minutes < 5) {
+                    statusText = 'En ligne';
+                    modalProfileLastOnline.classList.add('text-green-600');
+                    modalProfileLastOnline.classList.remove('text-gray-500');
+                } else if (minutes < 60) {
+                    statusText = `Il y a ${minutes} minute${minutes > 1 ? 's' : ''}`;
+                    modalProfileLastOnline.classList.remove('text-green-600');
+                    modalProfileLastOnline.classList.add('text-gray-500');
+                } else if (hours < 24) {
+                    statusText = `Il y a ${hours} heure${hours > 1 ? 's' : ''}`;
+                    modalProfileLastOnline.classList.remove('text-green-600');
+                    modalProfileLastOnline.classList.add('text-gray-500');
+                } else {
+                    statusText = `Il y a ${days} jour${days > 1 ? 's' : ''}`;
+                    modalProfileLastOnline.classList.remove('text-green-600');
+                    modalProfileLastOnline.classList.add('text-gray-500');
+                }
+                modalProfileLastOnline.textContent = statusText;
+            } else {
+                modalProfileLastOnline.textContent = 'Non disponible';
+                modalProfileLastOnline.classList.add('text-gray-500');
+                modalProfileLastOnline.classList.remove('text-green-600');
+            }
+
+
+            // Hide all action buttons initially
+            sendFriendRequestButton.classList.add('hidden');
+            cancelFriendRequestButton.classList.add('hidden');
+            acceptFriendRequestButton.classList.add('hidden');
+            declineFriendRequestButton.classList.add('hidden');
+            unfriendButton.classList.add('hidden');
+            blockUserButton.classList.add('hidden');
+            unblockUserButton.classList.add('hidden');
+            proposeGameButton.classList.add('hidden');
+            openChatButton.classList.add('hidden');
+
+            // Determine friendship status and show relevant buttons
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, targetUserId);
+            const q = query(
+                collection(db, "friendships"),
+                where("user1Id", "==", user1Id),
+                where("user2Id", "==", user2Id)
+            );
+            const querySnapshot = await getDocs(q);
+
+            let friendshipStatus = null;
+            let friendshipDocId = null;
+
+            if (!querySnapshot.empty) {
+                const docData = querySnapshot.docs[0].data();
+                friendshipStatus = docData.status;
+                friendshipDocId = querySnapshot.docs[0].id;
+                currentFriendshipDocId = friendshipDocId; // Store for later use
+            } else {
+                currentFriendshipDocId = null;
+            }
+
+            // Display buttons based on status
+            if (friendshipStatus === 'pending') {
+                if (querySnapshot.docs[0].data().senderId === targetUserId) { // Target sent request to current user
+                    acceptFriendRequestButton.classList.remove('hidden');
+                    declineFriendRequestButton.classList.remove('hidden');
+                } else { // Current user sent request to target
+                    cancelFriendRequestButton.classList.remove('hidden');
+                }
+            } else if (friendshipStatus === 'accepted') {
+                unfriendButton.classList.remove('hidden');
+                proposeGameButton.classList.remove('hidden');
+                openChatButton.classList.remove('hidden');
+                blockUserButton.classList.remove('hidden'); // Can block an accepted friend
+            } else if (friendshipStatus === 'blocked') {
+                if (querySnapshot.docs[0].data().senderId === currentUserId) { // Current user blocked target
+                    unblockUserButton.classList.remove('hidden');
+                } else { // Target blocked current user (cannot unblock from here)
+                    showMessage(`${targetProfile.username} vous a bloqué.`);
+                }
+            } else { // No existing friendship
+                sendFriendRequestButton.classList.remove('hidden');
+                blockUserButton.classList.remove('hidden'); // Can block someone not yet a friend
+            }
+
+            // Show the modal
+            userProfileModalOverlay.classList.remove('hidden');
+        }
+
+        // --- Friend System Firebase Operations ---
+
+        async function sendFriendRequest(receiverId) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, receiverId);
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id));
+            const querySnapshot = await getDocs(q);
+
+            try {
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    const currentStatus = querySnapshot.docs[0].data().status;
+                    const senderOfExisting = querySnapshot.docs[0].data().senderId;
+
+                    if (currentStatus === 'pending') {
+                        if (senderOfExisting === currentUserId) {
+                            showMessage("Vous avez déjà envoyé une demande à cet utilisateur.");
+                        } else { // Receiver sent request to current user, now current user sends back -> accept
+                            await updateDoc(docRef, { status: "accepted", timestamp: serverTimestamp() });
+                            showMessage("Demande d'ami acceptée !");
+                        }
+                    } else if (currentStatus === 'accepted') {
+                        showMessage("Vous êtes déjà amis.");
+                    } else if (currentStatus === 'blocked') {
+                        if (senderOfExisting === currentUserId) { // Current user blocked target
+                            showMessage("Vous avez bloqué cet utilisateur. Débloquez-le d'abord.");
+                        } else { // Target blocked current user
+                            showMessage("Cet utilisateur vous a bloqué. Impossible d'envoyer une demande.");
+                        }
+                    }
+                } else {
+                    // Use addDoc to let Firestore generate a unique ID for the friendship document
+                    await addDoc(collection(db, "friendships"), {
+                        user1Id: user1Id,
+                        user2Id: user2Id,
+                        status: "pending",
+                        senderId: currentUserId, // Store who sent the request
+                        timestamp: serverTimestamp()
+                    });
+                    showMessage("Demande d'ami envoyée !");
+                }
+            } catch (error) {
+                console.error("Erreur lors de l'envoi de la demande d'ami:", error);
+                showMessage("Erreur lors de l'envoi de la demande: " + error.message);
+            } finally {
+                userProfileModalOverlay.classList.add('hidden'); // Close modal after action
+            }
+        }
+
+        async function acceptFriendRequest(requesterId) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, requesterId);
+            // Query for the pending request where the current user is the receiver
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "pending"));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    await updateDoc(docRef, { status: "accepted", timestamp: serverTimestamp() });
+                    showMessage("Demande d'ami acceptée !");
+                } else {
+                    showMessage("Aucune demande en attente trouvée.");
+                }
+            } catch (error) {
+                console.error("Erreur lors de l'acceptation de la demande d'ami:", error);
+                showMessage("Erreur lors de l'acceptation: " + error.message);
+            } finally {
+                userProfileModalOverlay.classList.add('hidden');
+                notificationModalOverlay.classList.add('hidden'); // Also close notification modal
+            }
+        }
+
+        async function declineFriendRequest(requesterId) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, requesterId);
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "pending"));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    await deleteDoc(docRef); // Simply delete the pending request
+                    showMessage("Demande d'ami refusée.");
+                } else {
+                    showMessage("Aucune demande en attente trouvée.");
+                }
+            } catch (error) {
+                console.error("Erreur lors du refus de la demande d'ami:", error);
+                showMessage("Erreur lors du refus: " + error.message);
+            } finally {
+                userProfileModalOverlay.classList.add('hidden');
+                notificationModalOverlay.classList.add('hidden');
+            }
+        }
+
+        async function unfriend(targetId) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, targetId);
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "accepted"));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    await deleteDoc(docRef);
+                    showMessage(`Vous n'êtes plus ami avec ${allUserProfiles[targetId]?.username || targetId}.`);
+                } else {
+                    showMessage("Vous n'êtes pas ami avec cet utilisateur.");
+                }
+            } catch (error) {
+                console.error("Erreur lors du défriending:", error);
+                showMessage("Erreur lors du défriending: " + error.message);
+            } finally {
+                userProfileModalOverlay.classList.add('hidden');
+            }
+        }
+
+        async function blockUser(targetId) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, targetId);
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    await updateDoc(docRef, { status: "blocked", senderId: currentUserId, timestamp: serverTimestamp() });
+                    showMessage(`Vous avez bloqué ${allUserProfiles[targetId]?.username || targetId}.`);
+                } else {
+                    // If no existing friendship, create a new one with blocked status
+                    await addDoc(collection(db, "friendships"), {
+                        user1Id: user1Id,
+                        user2Id: user2Id,
+                        status: "blocked",
+                        senderId: currentUserId, // Store who initiated the block
+                        timestamp: serverTimestamp()
+                    });
+                    showMessage(`Vous avez bloqué ${allUserProfiles[targetId]?.username || targetId}.`);
+                }
+            } catch (error) {
+                console.error("Erreur lors du blocage de l'utilisateur:", error);
+                showMessage("Erreur lors du blocage: " + error.message);
+            } finally {
+                userProfileModalOverlay.classList.add('hidden');
+            }
+        }
+
+        async function unblockUser(targetId) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, targetId);
+            // Only unblock if current user was the one who blocked
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "blocked"), where("senderId", "==", currentUserId));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    const docRef = querySnapshot.docs[0].ref;
+                    await deleteDoc(docRef); // Remove the block entry
+                    showMessage(`Vous avez débloqué ${allUserProfiles[targetId]?.username || targetId}.`);
+                } else {
+                    showMessage("Cet utilisateur n'est pas bloqué par vous.");
+                }
+            } catch (error) {
+                console.error("Erreur lors du déblocage de l'utilisateur:", error);
+                showMessage("Erreur lors du déblocage: " + error.message);
+            } finally {
+                userProfileModalOverlay.classList.add('hidden');
+            }
+        }
+
+        // --- Friend List and Search UI ---
+
+        function showFriendsScreen() {
+            hideAllScreens();
+            friendsScreen.classList.remove('hidden');
+            renderFriendsList(); // Render current friends
+            userSearchResults.classList.add('hidden'); // Hide search results initially
+            userSearchInput.value = ''; // Clear search input
+        }
+
+        async function renderFriendsList() {
+            if (!db || !currentUserId || !isAuthReady) {
+                friendsListElement.innerHTML = '<p class="p-4 text-red-500 text-center">Connexion Firebase non établie.</p>';
+                return;
+            }
+
+            friendsListElement.innerHTML = '<p class="p-4 text-gray-500 text-center">Chargement de vos amis...</p>';
+
+            try {
+                // Query for friendships where current user is either user1Id or user2Id AND status is 'accepted'
+                // FIX: Wrap or() and where() in an and() statement
+                const q = query(
+                    collection(db, "friendships"),
+                    and(
+                        or(
+                            where("user1Id", "==", currentUserId),
+                            where("user2Id", "==", currentUserId)
+                        ),
+                        where("status", "==", "accepted")
+                    )
+                );
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    friendsListElement.innerHTML = '<p class="p-4 text-gray-500 text-center">Vous n\'avez pas encore d\'amis.</p>';
+                    return;
+                }
+
+                friendsListElement.innerHTML = ''; // Clear loading message
+
+                const friends = [];
+                for (const docSnap of querySnapshot.docs) {
+                    const data = docSnap.data();
+                    const friendId = data.user1Id === currentUserId ? data.user2Id : data.user1Id;
+                    // Try to get friend profile from cached allUserProfiles, otherwise fetch
+                    const friendProfile = allUserProfiles[friendId] || await fetchUserProfile(friendId);
+                    if (friendProfile) {
+                        friends.push({ id: friendId, username: friendProfile.username, lastOnline: friendProfile.lastOnline });
+                    }
+                }
+
+                // Sort friends: online first, then alphabetically by username
+                friends.sort((a, b) => {
+                    const fiveMinutesAgo = new Date().getTime() - (5 * 60 * 1000);
+                    const onlineA = a.lastOnline && (a.lastOnline.toDate().getTime() > fiveMinutesAgo);
+                    const onlineB = b.lastOnline && (b.lastOnline.toDate().getTime() > fiveMinutesAgo);
+
+                    if (onlineA && !onlineB) return -1; // A is online, B is not
+                    if (!onlineA && onlineB) return 1;  // B is online, A is not
+                    return (a.username || '').localeCompare(b.username || ''); // Alphabetical if both are online/offline
+                });
+
+
+                friends.forEach(friend => {
+                    const friendItem = document.createElement('div');
+                    friendItem.classList.add('user-list-item');
+                    friendItem.dataset.userId = friend.id;
+                    friendItem.addEventListener('click', () => showUserProfileModal(friend.id));
+
+                    let statusIndicatorClass = '';
+                    let statusText = '';
+                    if (friend.lastOnline && (new Date().getTime() - friend.lastOnline.toDate().getTime() < 5 * 60 * 1000)) {
+                        statusIndicatorClass = 'online';
+                        statusText = 'En ligne';
+                    } else if (friend.lastOnline) {
+                        const lastOnlineDate = friend.lastOnline.toDate();
+                        const diffMs = new Date().getTime() - lastOnlineDate.getTime();
+                        const minutes = Math.floor(diffMs / (1000 * 60));
+                        const hours = Math.floor(minutes / 60);
+                        const days = Math.floor(hours / 24);
+
+                        if (minutes < 60) {
+                            statusText = `Il y a ${minutes} min`;
+                        } else if (hours < 24) {
+                            statusText = `Il y a ${hours} h`;
+                        } else {
+                            statusText = `Il y a ${days} j`;
+                        }
+                    } else {
+                        statusText = 'Hors ligne';
+                    }
+
+                    friendItem.innerHTML = `
+                        <span class="status-indicator ${statusIndicatorClass}"></span>
+                        <span class="username-display">${friend.username || 'Inconnu'}</span>
+                        <span class="text-xs text-gray-500 ml-auto">${statusText}</span>
+                    `;
+                    friendsListElement.appendChild(friendItem);
+                });
+
+            } catch (error) {
+                console.error("Erreur lors du rendu de la liste d'amis:", error);
+                friendsListElement.innerHTML = '<p class="p-4 text-red-500 text-center">Erreur lors du chargement des amis.</p>';
+            }
+        }
+
+        async function searchUsers() {
+            if (!db || !currentUserId || !isAuthReady) {
+                userSearchResults.innerHTML = '<p class="p-4 text-red-500 text-center">Connexion Firebase non établie.</p>';
+                userSearchResults.classList.remove('hidden');
+                return;
+            }
+
+            const searchTerm = userSearchInput.value.trim().toLowerCase();
+            userSearchResults.innerHTML = ''; // Clear previous results
+            userSearchResults.classList.remove('hidden');
+
+            if (searchTerm.length < 3) {
+                userSearchResults.innerHTML = '<p class="p-4 text-gray-500 text-center">Tapez au moins 3 caractères.</p>';
+                return;
+            }
+
+            // Filter from the cached allUserProfiles
+            const results = Object.values(allUserProfiles).filter(profile =>
+                profile.id !== currentUserId && // Exclude current user from search results
+                (profile.username.toLowerCase().includes(searchTerm) || profile.id.toLowerCase().includes(searchTerm))
+            );
+
+            if (results.length === 0) {
+                userSearchResults.innerHTML = '<p class="p-4 text-gray-500 text-center">Aucun utilisateur trouvé.</p>';
+                return;
+            }
+
+            results.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.classList.add('user-list-item');
+                userItem.dataset.userId = user.id;
+                userItem.addEventListener('click', () => showUserProfileModal(user.id));
+
+                userItem.innerHTML = `
+                    <span class="username-display">${user.username}</span>
+                    <span class="user-id-display">${user.id}</span>
+                `;
+                userSearchResults.appendChild(userItem);
+            });
+        }
+
+        // --- Notification System ---
+
+        let pendingFriendRequests = [];
+        let gameProposals = []; // Not implemented yet, but placeholder for future
+
+        function setupFriendshipListeners() {
+            if (!db || !currentUserId) return;
+
+            // Unsubscribe existing listeners if any to prevent duplicates
+            if (friendsListenerUnsubscribe) friendsListenerUnsubscribe();
+            if (pendingRequestsListenerUnsubscribe) pendingRequestsListenerUnsubscribe();
+
+            // Listener for accepted friends (for friends list)
+            // FIX: Wrap or() and where() in an and() statement
+            friendsListenerUnsubscribe = onSnapshot(
+                query(
+                    collection(db, "friendships"),
+                    and(
+                        or(
+                            where("user1Id", "==", currentUserId),
+                            where("user2Id", "==", currentUserId)
+                        ),
+                        where("status", "==", "accepted")
+                    )
+                ),
+                (snapshot) => {
+                    renderFriendsList(); // Re-render friends list on any change
+                },
+                (error) => {
+                    console.error("Erreur d'écoute des amis:", error);
+                }
+            );
+
+            // Listener for pending friend requests (for notifications)
+            pendingRequestsListenerUnsubscribe = onSnapshot(
+                query(
+                    collection(db, "friendships"),
+                    where("user2Id", "==", currentUserId), // Current user is the receiver
+                    where("status", "==", "pending")
+                ),
+                async (snapshot) => {
+                    pendingFriendRequests = []; // Clear previous requests
+                    for (const docSnap of snapshot.docs) {
+                        const data = docSnap.data();
+                        // Fetch sender's profile to get username for display
+                        const senderProfile = allUserProfiles[data.senderId] || await fetchUserProfile(data.senderId);
+                        if (senderProfile) {
+                            pendingFriendRequests.push({
+                                id: docSnap.id,
+                                senderId: data.senderId,
+                                senderUsername: senderProfile.username,
+                                type: 'friend_request'
+                            });
+                        }
+                    }
+                    updateNotificationCount();
+                    if (!notificationModalOverlay.classList.contains('hidden')) {
+                        renderNotifications(); // Re-render if modal is open
+                    }
+                },
+                (error) => {
+                    console.error("Erreur d'écoute des demandes d'amis:", error);
+                }
+            );
+        }
+
+        function updateNotificationCount() {
+            const totalNotifications = pendingFriendRequests.length + gameProposals.length; // Add game proposals later
+            if (totalNotifications > 0) {
+                notificationCount.textContent = totalNotifications;
+                notificationCount.classList.remove('hidden');
+            } else {
+                notificationCount.classList.add('hidden');
+            }
+        }
+
+        function showNotificationModal() {
+            notificationModalOverlay.classList.remove('hidden');
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            notificationList.innerHTML = ''; // Clear previous notifications
+            if (pendingFriendRequests.length === 0 && gameProposals.length === 0) {
+                notificationList.innerHTML = '<p class="p-4 text-gray-500 text-center">Aucune notification.</p>';
+                return;
+            }
+
+            pendingFriendRequests.forEach(request => {
+                const item = document.createElement('div');
+                item.classList.add('notification-item');
+                item.innerHTML = `
+                    <span>Demande d'ami de <span class="font-semibold">${request.senderUsername}</span></span>
+                    <div class="actions">
+                        <button class="accept-button" data-sender-id="${request.senderId}">Accepter</button>
+                        <button class="decline-button" data-sender-id="${request.senderId}">Refuser</button>
+                    </div>
+                `;
+                item.querySelector('.accept-button').addEventListener('click', () => acceptFriendRequest(request.senderId));
+                item.querySelector('.decline-button').addEventListener('click', () => declineFriendRequest(request.senderId));
+                notificationList.appendChild(item);
+            });
+
+            // Add game proposals here later
+            gameProposals.forEach(proposal => {
+                const item = document.createElement('div');
+                item.classList.add('notification-item');
+                item.innerHTML = `
+                    <span>Invitation de partie de <span class="font-semibold">${proposal.senderUsername}</span></span>
+                    <div class="actions">
+                        <button class="accept-button bg-purple-600 hover:bg-purple-700" data-game-id="${proposal.gameId}">Accepter</button>
+                        <button class="decline-button" data-game-id="${proposal.gameId}">Refuser</button>
+                    </div>
+                `;
+                // Add event listeners for game proposal acceptance/rejection
+                notificationList.appendChild(item);
+            });
+        }
+
+        // --- Chat System ---
+
+        async function openChat(partnerId, partnerUsername) {
+            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+            if (partnerId === currentUserId) { showMessage("Vous ne pouvez pas chatter avec vous-même."); return; }
+
+            currentChatPartnerId = partnerId;
+            currentChatPartnerUsername = partnerUsername;
+            chatPartnerName.textContent = `Chat avec ${partnerUsername}`;
+
+            hideAllScreens(); // Hide all other screens
+            chatModalOverlay.classList.remove('hidden');
+            chatMessagesDiv.innerHTML = ''; // Clear previous messages
+            chatMessageInput.value = ''; // Clear input
+
+            // Setup real-time listener for chat messages
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, partnerId);
+            const chatRoomId = `${user1Id}_${user2Id}`;
+            const chatDocRef = doc(db, "chats", chatRoomId);
+
+            if (chatListenerUnsubscribe) {
+                chatListenerUnsubscribe(); // Unsubscribe from previous chat if any
+            }
+
+            chatListenerUnsubscribe = onSnapshot(chatDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const chatData = docSnap.data();
+                    displayChatMessages(chatData.messages || []);
+                } else {
+                    displayChatMessages([]); // No messages yet
+                    console.log("Aucune conversation trouvée, la créera au premier message.");
+                }
+            }, (error) => {
+                console.error("Erreur d'écoute du chat:", error);
+                showMessage("Erreur de connexion au chat: " + error.message);
+            });
+        }
+
+        function displayChatMessages(messages) {
+            chatMessagesDiv.innerHTML = '';
+            if (messages.length === 0) {
+                chatMessagesDiv.innerHTML = '<p class="p-4 text-gray-500 text-center">Commencez la conversation !</p>';
+                return;
+            }
+
+            // Sort messages by timestamp to ensure correct order
+            messages.sort((a, b) => (a.timestamp?.toDate() || 0) - (b.timestamp?.toDate() || 0));
+
+            messages.forEach(msg => {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('chat-message');
+                messageElement.classList.add(msg.senderId === currentUserId ? 'self' : 'other');
+
+                const date = msg.timestamp ? msg.timestamp.toDate() : new Date();
+                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                messageElement.innerHTML = `
+                    <p>${msg.text}</p>
+                    <span class="timestamp">${timeString}</span>
+                `;
+                chatMessagesDiv.appendChild(messageElement);
+            });
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight; // Scroll to bottom to show latest message
+        }
+
+        async function sendChatMessage() {
+            const messageText = chatMessageInput.value.trim();
+            if (!messageText || !currentChatPartnerId || !currentUserId || !db || !isAuthReady) {
+                return;
+            }
+
+            const { user1Id, user2Id } = getOrderedUserIds(currentUserId, currentChatPartnerId);
+            const chatRoomId = `${user1Id}_${user2Id}`;
+            const chatDocRef = doc(db, "chats", chatRoomId);
+
+            try {
+                const docSnap = await getDoc(chatDocRef);
+                const newMessage = {
+                    senderId: currentUserId,
+                    text: messageText,
+                    timestamp: serverTimestamp()
+                };
+
+                if (docSnap.exists()) {
+                    // Update existing chat document by adding to the messages array
+                    await updateDoc(chatDocRef, {
+                        messages: arrayUnion(newMessage)
+                    });
+                } else {
+                    // Create new chat document with the first message
+                    await setDoc(chatDocRef, {
+                        user1Id: user1Id,
+                        user2Id: user2Id,
+                        messages: [newMessage]
+                    });
+                }
+                chatMessageInput.value = ''; // Clear input field after sending
+            } catch (error) {
+                console.error("Erreur lors de l'envoi du message:", error);
+                showMessage("Erreur lors de l'envoi du message: " + error.message);
+            }
+        }
 
         // --- Logique de navigation entre les écrans ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Initial display of home screen
-            hideAllScreens(); // Hide all initially
-            homeScreen.classList.remove('hidden'); // Show home screen
+            hideAllScreens();
+            homeScreen.classList.remove('hidden');
 
             // Username management event listeners
             if (changeUsernameButton) {
@@ -2267,6 +3390,7 @@
                         findOnlineMatch();
                     } else {
                         showMessage("Veuillez patienter, la connexion à Firebase est en cours...", () => {
+                            // Retry after message box is closed
                             if (isAuthReady && currentUserId) {
                                 findOnlineMatch();
                             } else {
@@ -2289,20 +3413,20 @@
 
             // Game End Screen Buttons
             gameEndReplayButton.addEventListener('click', () => {
-                gameEndOverlay.classList.add('hidden'); // Hide the overlay
-                gameEndBanner.classList.add('hidden'); // Hide the banner
+                gameEndOverlay.classList.add('hidden');
+                gameEndBanner.classList.add('hidden');
                 if (currentEndGameType === 'local') {
                     resetLocalGame();
                 } else if (currentEndGameType === 'ai') {
                     resetAIGame();
                 } else if (currentEndGameType === 'online') {
-                    resetOnlineGame(); // This will initiate a new matchmaking search
+                    resetOnlineGame();
                 }
             });
 
             gameEndHomeButton.addEventListener('click', () => {
-                gameEndOverlay.classList.add('hidden'); // Hide the overlay
-                gameEndBanner.classList.add('hidden'); // Hide the banner
+                gameEndOverlay.classList.add('hidden');
+                gameEndBanner.classList.add('hidden');
                 if (currentEndGameType === 'local') {
                     leaveLocalGame();
                 } else if (currentEndGameType === 'ai') {
@@ -2325,7 +3449,7 @@
 
             if (localBackToHomeButton) {
                 localBackToHomeButton.addEventListener('click', function() {
-                    leaveLocalGame(); // Use the new leave function
+                    leaveLocalGame();
                 });
             }
 
@@ -2347,7 +3471,7 @@
 
             if (aiBackToHomeButton) {
                 aiBackToHomeButton.addEventListener('click', function() {
-                    leaveAIGame(); // Use the new leave function
+                    leaveAIGame();
                 });
             }
 
@@ -2365,9 +3489,9 @@
                 aiResetButton.addEventListener('click', resetAIGame);
             }
 
-            // --- Nouveaux Event Listeners pour Historique et Classement ---
+            // --- Event Listeners for History and Leaderboard ---
             if (showHistoryButton) {
-                showHistoryButton.addEventListener('click', showGameHistoryScreen); // Lien vers la nouvelle fonction
+                showHistoryButton.addEventListener('click', showGameHistoryScreen);
             }
 
             if (showLeaderboardButton) {
@@ -2390,7 +3514,6 @@
                 leaderboardBackToHomeButton.addEventListener('click', function() {
                     hideAllScreens();
                     homeScreen.classList.remove('hidden');
-                    // Re-display current user's profile on returning to home
                     if (isAuthReady && currentUserId) {
                         fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
                     }
@@ -2402,7 +3525,6 @@
                 historyBackButton.addEventListener('click', function() {
                     hideAllScreens();
                     homeScreen.classList.remove('hidden');
-                    // Re-display current user's profile on returning to home
                     if (isAuthReady && currentUserId) {
                         fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
                     }
@@ -2427,8 +3549,72 @@
                 });
             }
             if (detailBackButton) {
-                detailBackButton.addEventListener('click', showGameHistoryScreen); // Go back to history list
+                detailBackButton.addEventListener('click', showGameHistoryScreen);
             }
+
+            // --- NOUVEAUX LISTENERS POUR LE SYSTÈME D'AMIS ET CHAT ---
+            if (showFriendsButton) {
+                showFriendsButton.addEventListener('click', showFriendsScreen);
+            }
+            if (friendsBackToHomeButton) {
+                friendsBackToHomeButton.addEventListener('click', function() {
+                    hideAllScreens();
+                    homeScreen.classList.remove('hidden');
+                    if (isAuthReady && currentUserId) {
+                        fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
+                    }
+                });
+            }
+
+            if (userSearchButton) {
+                userSearchButton.addEventListener('click', searchUsers);
+                userSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        searchUsers();
+                    }
+                });
+            }
+
+            // User Profile Modal Actions
+            userProfileModalCloseButton.addEventListener('click', () => userProfileModalOverlay.classList.add('hidden'));
+
+            sendFriendRequestButton.addEventListener('click', () => sendFriendRequest(modalProfileId.textContent));
+            cancelFriendRequestButton.addEventListener('click', () => unfriend(modalProfileId.textContent)); // Unfriend also cancels pending
+            acceptFriendRequestButton.addEventListener('click', () => acceptFriendRequest(modalProfileId.textContent));
+            declineFriendRequestButton.addEventListener('click', () => declineFriendRequest(modalProfileId.textContent));
+            unfriendButton.addEventListener('click', () => unfriend(modalProfileId.textContent));
+            blockUserButton.addEventListener('click', () => blockUser(modalProfileId.textContent));
+            unblockUserButton.addEventListener('click', () => unblockUser(modalProfileId.textContent));
+            proposeGameButton.addEventListener('click', () => showMessage("La proposition de partie n'est pas encore implémentée.")); // Placeholder for now
+            openChatButton.addEventListener('click', () => openChat(modalProfileId.textContent, modalProfileUsername.textContent));
+
+            // Notification Modal Actions
+            notificationButton.addEventListener('click', showNotificationModal);
+            notificationModalCloseButton.addEventListener('click', () => notificationModalOverlay.classList.add('hidden'));
+
+            // Chat Modal Actions
+            chatModalCloseButton.addEventListener('click', () => {
+                chatModalOverlay.classList.add('hidden');
+                if (chatListenerUnsubscribe) {
+                    chatListenerUnsubscribe(); // Stop listening to chat messages
+                    chatListenerUnsubscribe = null;
+                }
+                currentChatPartnerId = null;
+                currentChatPartnerUsername = null;
+                // Return to friends screen if chat was opened from there, else home
+                if (!friendsScreen.classList.contains('hidden')) { // Check if friends screen was active before chat
+                    showFriendsScreen();
+                } else {
+                    hideAllScreens();
+                    homeScreen.classList.remove('hidden');
+                }
+            });
+            sendChatMessageButton.addEventListener('click', sendChatMessage);
+            chatMessageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            });
         });
     </script>
 </body>
