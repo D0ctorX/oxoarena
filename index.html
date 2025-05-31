@@ -589,7 +589,6 @@
                         <span id="profile-games-played" class="font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Victoires :</span>
                         <span id="profile-wins" class="text-green-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
@@ -640,8 +639,8 @@
                 </button>
                 <button id="local-back-to-home-button" class="game-button">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
-                    </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                        </svg>
                     <span>Retour à l'Accueil</span>
                 </button>
             </div>
@@ -815,6 +814,10 @@
                 <p class="p-4 text-gray-500 text-center">Vous n'avez pas encore d'amis.</p>
             </div>
         </div>
+
+        <button id="share-app-button" class="game-button mt-4 bg-blue-600 hover:bg-blue-700">
+            <i class="fas fa-share-alt h-6 w-6"></i> <span>Partager l'application</span>
+        </button>
 
         <button id="friends-back-to-home-button" class="game-button mt-8">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -1423,6 +1426,9 @@
         const userSearchButton = document.getElementById('user-search-button');
         const userSearchResults = document.getElementById('user-search-results');
         const friendsListElement = document.getElementById('friends-list');
+        // NEW: Share App Button
+        const shareAppButton = document.getElementById('share-app-button');
+
 
         const userProfileModalOverlay = document.getElementById('user-profile-modal-overlay');
         const userProfileModalCloseButton = document.getElementById('user-profile-modal-close');
@@ -2357,7 +2363,6 @@
             onlineCurrentTurn = 'X';
             onlineGameActive = true;
             resetOnlineBoardUI();
-            updateStatus(`Au tour de : X`, 'online');
             findOnlineMatch(); // Start a new matchmaking search
         }
 
@@ -2865,7 +2870,7 @@
             if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
             const { user1Id, user2Id } = getOrderedUserIds(currentUserId, requesterId);
             // Query for the pending request where the current user is the receiver
-            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "pending"));
+            const q = query(collection(db, "friendships"), where("user11Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "pending"));
 
             try {
                 const querySnapshot = await getDocs(q);
@@ -2991,6 +2996,14 @@
             renderFriendsList(); // Render current friends
             userSearchResults.classList.add('hidden'); // Hide search results initially
             userSearchInput.value = ''; // Clear search input
+            // Enable/Disable share button based on auth status
+            if (isAuthReady && currentUserId) {
+                shareAppButton.disabled = false;
+                shareAppButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                shareAppButton.disabled = true;
+                shareAppButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
         }
 
         async function renderFriendsList() {
@@ -3147,7 +3160,7 @@
         // --- Notification System ---
 
         let pendingFriendRequests = [];
-        // `gameProposals` is declared globally above, so no `let` or `const` here.
+        // gameProposals is already declared globally above.
 
         function setupFriendshipListeners() {
             if (!db || !currentUserId) return;
@@ -3527,6 +3540,41 @@
             }
         }
 
+        // --- Share App Function ---
+        async function shareApp() {
+            if (!isAuthReady || !currentUserId || !userProfileData) {
+                showMessage("Veuillez vous connecter pour partager l'application.");
+                return;
+            }
+
+            const appUrl = window.location.origin + window.location.pathname; // Get base URL of the app
+            const shareUrlWithInvite = `${appUrl}?invite_from=${currentUserId}`;
+            const shareTitle = "Rejoins-moi sur OXO Arena !";
+            const shareText = `Salut ! Viens jouer à OXO Arena avec moi ! C'est un super jeu de morpion en ligne. Mon pseudo est "${userProfileData.username}" et mon ID est "${currentUserId}". Ajoute-moi en ami en utilisant mon ID une fois que tu es inscrit. Clique ici pour jouer : ${shareUrlWithInvite}`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: shareTitle,
+                        text: shareText,
+                        url: shareUrlWithInvite,
+                    });
+                    console.log('Partage réussi !');
+                } catch (error) {
+                    console.error('Erreur de partage:', error);
+                    // User cancelled share, or other error
+                    if (error.name === 'AbortError') {
+                        // User cancelled, no need to show error message
+                    } else {
+                        showMessage("Impossible de partager l'application. Veuillez copier le texte ci-dessous et le coller manuellement. \n\n" + shareText);
+                    }
+                }
+            } else {
+                // Fallback for browsers that do not support Web Share API
+                showMessage("Votre navigateur ne supporte pas le partage direct. Veuillez copier le texte ci-dessous et le coller manuellement. \n\n" + shareText);
+            }
+        }
+
 
         // --- Logique de navigation entre les écrans ---
         document.addEventListener('DOMContentLoaded', function() {
@@ -3780,6 +3828,37 @@
                     declineGameInvitation(currentIncomingGameInvite.id);
                 }
             });
+
+            // Share App Button Listener
+            if (shareAppButton) {
+                shareAppButton.addEventListener('click', shareApp);
+            }
+
+            // Initial check for invite_from parameter in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteFromId = urlParams.get('invite_from');
+            if (inviteFromId) {
+                console.log("URL contient un paramètre d'invitation:", inviteFromId);
+                // Attempt to auto-add friend if user is logged in
+                // This will be handled by the Firebase auth listener once `currentUserId` is set and `isAuthReady` is true.
+                // We can add a check here to show a message or pre-fill the search input.
+                // For now, we'll just log it. A more robust solution would involve a dedicated "invitation" flow.
+                // For simplicity, we'll just show a message to the user to manually add the friend using the ID.
+                if (isAuthReady && currentUserId && currentUserId !== inviteFromId) {
+                    // Fetch the inviter's profile to display their username
+                    fetchUserProfile(inviteFromId).then(inviterProfile => {
+                        const inviterUsername = inviterProfile ? inviterProfile.username : 'un ami';
+                        showMessage(`Vous avez été invité par ${inviterUsername} ! Son ID est : ${inviteFromId}. Utilisez la fonction de recherche d'amis pour l'ajouter.`);
+                    }).catch(() => {
+                        showMessage(`Vous avez été invité par un ami ! Son ID est : ${inviteFromId}. Utilisez la fonction de recherche d'amis pour l'ajouter.`);
+                    });
+                } else if (isAuthReady && currentUserId === inviteFromId) {
+                    // User invited themselves, ignore
+                } else if (!isAuthReady) {
+                    // User not logged in, prompt them to log in/register
+                    showMessage(`Vous avez été invité par un ami ! Veuillez vous connecter ou vous inscrire pour l'ajouter. Son ID est : ${inviteFromId}.`);
+                }
+            }
         });
     </script>
 </body>
