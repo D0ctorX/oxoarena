@@ -39,14 +39,15 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr); /* 5 colonnes de taille égale */
             grid-template-rows: repeat(5, 1fr);    /* 5 lignes de taille égale */
-            width: 400px; /* Largeur fixe */
-            height: 400px; /* Hauteur fixe pour des carrés parfaits */
+            width: 90vw; /* Largeur fluide basée sur la largeur du viewport */
+            height: 90vw; /* Hauteur fluide pour maintenir le ratio */
+            max-width: 400px; /* Largeur maximale pour les grands écrans */
+            max-height: 400px; /* Hauteur maximale pour les grands écrans */
             border: 2px solid #1A2B3C; /* Bordure foncée du thème */
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée */
             border-radius: 0.75rem; /* Coins arrondis */
             background-color: #ffffff; /* Fond blanc pour le plateau */
             overflow: hidden; /* Assure que les coins arrondis des cellules sont contenus */
-            flex-shrink: 0; /* Empêche le plateau de rétrécir */
         }
 
         .cell {
@@ -460,9 +461,6 @@
         .user-list-item .status-indicator.online {
             background-color: #22C55E; /* Vert */
         }
-        .user-list-item .status-indicator.bg-yellow-500 { /* For in-game status */
-            background-color: #FBBF24; /* Yellow */
-        }
         .user-list-item .username-display {
             font-weight: 600;
             color: #1A2B3C;
@@ -622,7 +620,7 @@
             </button>
         </div>
 
-        <div id="local-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center mx-auto max-w-[450px] w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <div id="local-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
             <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Local</h1>
             <p class="text-center text-gray-600 mb-6 italic">
                 Les parties jouées en local n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.).
@@ -648,7 +646,7 @@
             </div>
         </div>
 
-        <div id="ai-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center mx-auto max-w-[450px] w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <div id="ai-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
             <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Contre IA</h1>
             <p class="text-center text-gray-600 mb-6 italic">
                 Les parties jouées contre l'IA en mode Facile et Moyen n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.). Seules les parties en mode Difficile sont prises en compte.
@@ -693,7 +691,7 @@
             </button>
         </div>
 
-        <div id="online-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center mx-auto max-w-[450px] w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+        <div id="online-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
             <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - En Ligne</h1>
             <p class="text-center text-gray-600 mb-2 italic">
                 Votre ID de partie : <span id="online-game-id-display" class="font-semibold break-all text-sm"></span>
@@ -761,7 +759,7 @@
         </button>
     </div>
 
-    <div id="history-detail-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center mx-auto max-w-[450px] w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div id="history-detail-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
         <h1 class="text-4xl font-extrabold mb-6 text-center">Détails de la Partie</h1>
         <div class="history-detail-container">
             <div id="detail-game-info" class="history-detail-info">
@@ -1497,7 +1495,6 @@
         let localCurrentPlayer = 'X';
         let localGameActive = true;
         let localMovesHistory = [];
-        let localCells; // Déclarée ici, initialisée plus tard
 
         // --- Variables et éléments du DOM pour le jeu IA ---
         const aiStatusDisplay = document.getElementById('ai-game-status');
@@ -1575,7 +1572,6 @@
                 }
                 currentBoardElement.appendChild(cell);
             }
-            // IMPORTANT: Initialiser localCells ici, APRÈS que les cellules aient été créées
             if (boardElementId === 'local-board') {
                 localCells = Array.from(document.querySelectorAll('#local-board .cell'));
             } else if (boardElementId === 'ai-board') {
@@ -1589,7 +1585,7 @@
 
         const checkForWin = (player, currentBoard) => {
             for (let i = 0; i < winningCombinations.length; i++) {
-                const combination = winningCombinating[i];
+                const combination = winningCombinations[i];
                 let allMatch = true;
                 for (let j = 0; j < WIN_LENGTH; j++) {
                     if (currentBoard[combination[j]] !== player) {
@@ -1725,13 +1721,10 @@
             localGameActive = true;
             localMovesHistory = [];
             updateStatus(`Au tour de : ${localCurrentPlayer}`, 'local');
-            // Assurez-vous que localCells est défini avant de l'utiliser
-            if (localCells) { 
-                localCells.forEach(cell => {
-                    cell.innerHTML = '';
-                    cell.classList.remove('x', 'o');
-                });
-            }
+            localCells.forEach(cell => {
+                cell.innerHTML = '';
+                cell.classList.remove('x', 'o');
+            });
             localGameScreen.classList.remove('hidden');
         };
 
@@ -2594,7 +2587,7 @@
             const cellSizePx = 20;
             const gapPx = 1;
 
-            let boardHTML = `<div class="grid bg-gray-300 border border-gray-400 rounded-sm overflow-hidden" style="width: 100px; height: 100px; grid-template-columns: repeat(${boardSize}, 1fr); gap: ${gapPx}px;">`;
+            let boardHTML = `<div class="grid w-full aspect-square bg-gray-300 border border-gray-400 rounded-sm overflow-hidden" style="grid-template-columns: repeat(${boardSize}, 1fr); gap: ${gapPx}px;">`;
             boardState.forEach(cell => {
                 let content = '';
                 let cellClass = '';
@@ -3714,8 +3707,7 @@
                 playLocalButton.addEventListener('click', function() {
                     hideAllScreens();
                     localGameScreen.classList.remove('hidden');
-                    // Créez les cellules et initialisez localCells ici
-                    createCells('local-board', handleLocalCellClick); 
+                    createCells('local-board', handleLocalCellClick);
                     resetLocalGame();
                 });
             }
