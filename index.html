@@ -967,13 +967,16 @@
 
         // Game Invitation Variables
         let gameInvitesListenerUnsubscribe = null; // Listener for incoming game invites
-        let gameProposals = []; // Array to store incoming game proposals (Declared ONLY ONCE)
+        let gameProposals = []; // Array to store incoming game proposals
         let currentIncomingGameInvite = null; // Stores the active game invite being displayed in the modal
         let currentSentInviteListenerUnsubscribe = null; // Listener for the game invite sent by this user
 
         // Global variable to store all user profiles for quick lookup (e.g., by ID or username)
         // This will be populated by fetching all profiles, primarily for search and display.
         let allUserProfiles = {};
+
+        // Variable to store the invite_from ID from the URL, if present
+        let urlInviteFromId = null;
 
         if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
             app = initializeApp(firebaseConfig);
@@ -994,9 +997,15 @@
                     setupFriendshipListeners();
                     setupGameInviteListener(); // Setup listener for incoming game invites
                     // Fetch all user profiles for search functionality
-                    fetchAllUserProfiles();
+                    await fetchAllUserProfiles(); // Ensure profiles are loaded before processing invitation
                     // Set up presence (lastOnline) listener
                     setupPresenceListener();
+
+                    // Process URL invitation AFTER user is authenticated and profiles are loaded
+                    if (urlInviteFromId) {
+                        processUrlInvitation(urlInviteFromId);
+                        urlInviteFromId = null; // Clear it after processing
+                    }
 
                 } else {
                     console.log("Firebase: No user signed in. Attempting sign-in...");
@@ -1485,7 +1494,6 @@
         let localBoard = Array(25).fill('');
         let localCurrentPlayer = 'X';
         let localGameActive = true;
-        let localCells;
         let localMovesHistory = [];
 
         // --- Variables et éléments du DOM pour le jeu IA ---
@@ -2819,8 +2827,16 @@
 
         // --- Friend System Firebase Operations ---
 
-        async function sendFriendRequest(receiverId) {
-            if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
+        async function sendFriendRequest(receiverId, isAuto = false) {
+            if (!db || !currentUserId || !isAuthReady) {
+                if (!isAuto) showMessage("Erreur: Firebase non prêt ou utilisateur non connecté.");
+                return;
+            }
+            if (currentUserId === receiverId) {
+                if (!isAuto) showMessage("Vous ne pouvez pas vous ajouter vous-même en ami.");
+                return;
+            }
+
             const { user1Id, user2Id } = getOrderedUserIds(currentUserId, receiverId);
             const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id));
             const querySnapshot = await getDocs(q);
@@ -2833,18 +2849,18 @@
 
                     if (currentStatus === 'pending') {
                         if (senderOfExisting === currentUserId) {
-                            showMessage("Vous avez déjà envoyé une demande à cet utilisateur.");
+                            if (!isAuto) showMessage("Vous avez déjà envoyé une demande à cet utilisateur.");
                         } else { // Receiver sent request to current user, now current user sends back -> accept
                             await updateDoc(docRef, { status: "accepted", timestamp: serverTimestamp() });
                             showMessage("Demande d'ami acceptée !");
                         }
                     } else if (currentStatus === 'accepted') {
-                        showMessage("Vous êtes déjà amis.");
+                        if (!isAuto) showMessage("Vous êtes déjà amis.");
                     } else if (currentStatus === 'blocked') {
                         if (senderOfExisting === currentUserId) { // Current user blocked target
-                            showMessage("Vous avez bloqué cet utilisateur. Débloquez-le d'abord.");
+                            if (!isAuto) showMessage("Vous avez bloqué cet utilisateur. Débloquez-le d'abord.");
                         } else { // Target blocked current user
-                            showMessage("Cet utilisateur vous a bloqué. Impossible d'envoyer une demande.");
+                            if (!isAuto) showMessage("Cet utilisateur vous a bloqué. Impossible d'envoyer une demande.");
                         }
                     }
                 } else {
@@ -2860,9 +2876,9 @@
                 }
             } catch (error) {
                 console.error("Erreur lors de l'envoi de la demande d'ami:", error);
-                showMessage("Erreur lors de l'envoi de la demande: " + error.message);
+                if (!isAuto) showMessage("Erreur lors de l'envoi de la demande: " + error.message);
             } finally {
-                userProfileModalOverlay.classList.add('hidden'); // Close modal after action
+                if (!isAuto) userProfileModalOverlay.classList.add('hidden'); // Close modal after action
             }
         }
 
@@ -2870,7 +2886,7 @@
             if (!db || !currentUserId || !isAuthReady) { showMessage("Erreur: Firebase non prêt ou utilisateur non connecté."); return; }
             const { user1Id, user2Id } = getOrderedUserIds(currentUserId, requesterId);
             // Query for the pending request where the current user is the receiver
-            const q = query(collection(db, "friendships"), where("user11Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "pending"));
+            const q = query(collection(db, "friendships"), where("user1Id", "==", user1Id), where("user2Id", "==", user2Id), where("status", "==", "pending"));
 
             try {
                 const querySnapshot = await getDocs(q);
@@ -3575,11 +3591,41 @@
             }
         }
 
+        // --- NEW: Function to process URL invitation ---
+        async function processUrlInvitation(inviteFromId) {
+            if (!isAuthReady || !currentUserId || !userProfileData) {
+                console.warn("Firebase not ready or user not logged in to process URL invitation.");
+                return;
+            }
+
+            if (inviteFromId && inviteFromId !== currentUserId) {
+                console.log(`Processing URL invitation from: ${inviteFromId}`);
+                // Try to fetch the inviter's profile to get their username
+                const inviterProfile = allUserProfiles[inviteFromId] || await fetchUserProfile(inviteFromId);
+                const inviterUsername = inviterProfile ? inviterProfile.username : inviteFromId;
+
+                // Attempt to send a friend request automatically
+                await sendFriendRequest(inviteFromId, true); // Use isAuto = true to suppress redundant messages
+                showMessage(`Demande d'ami envoyée automatiquement à ${inviterUsername} (ID: ${inviteFromId}) !`);
+            }
+        }
+
 
         // --- Logique de navigation entre les écrans ---
         document.addEventListener('DOMContentLoaded', function() {
             hideAllScreens();
             homeScreen.classList.remove('hidden');
+
+            // Parse URL parameters immediately on DOMContentLoaded
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteFromIdParam = urlParams.get('invite_from');
+            if (inviteFromIdParam) {
+                urlInviteFromId = inviteFromIdParam; // Store it globally
+                // Remove the parameter from the URL to prevent re-processing on refresh
+                const newUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+
 
             // Username management event listeners
             if (changeUsernameButton) {
@@ -3832,32 +3878,6 @@
             // Share App Button Listener
             if (shareAppButton) {
                 shareAppButton.addEventListener('click', shareApp);
-            }
-
-            // Initial check for invite_from parameter in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const inviteFromId = urlParams.get('invite_from');
-            if (inviteFromId) {
-                console.log("URL contient un paramètre d'invitation:", inviteFromId);
-                // Attempt to auto-add friend if user is logged in
-                // This will be handled by the Firebase auth listener once `currentUserId` is set and `isAuthReady` is true.
-                // We can add a check here to show a message or pre-fill the search input.
-                // For now, we'll just log it. A more robust solution would involve a dedicated "invitation" flow.
-                // For simplicity, we'll just show a message to the user to manually add the friend using the ID.
-                if (isAuthReady && currentUserId && currentUserId !== inviteFromId) {
-                    // Fetch the inviter's profile to display their username
-                    fetchUserProfile(inviteFromId).then(inviterProfile => {
-                        const inviterUsername = inviterProfile ? inviterProfile.username : 'un ami';
-                        showMessage(`Vous avez été invité par ${inviterUsername} ! Son ID est : ${inviteFromId}. Utilisez la fonction de recherche d'amis pour l'ajouter.`);
-                    }).catch(() => {
-                        showMessage(`Vous avez été invité par un ami ! Son ID est : ${inviteFromId}. Utilisez la fonction de recherche d'amis pour l'ajouter.`);
-                    });
-                } else if (isAuthReady && currentUserId === inviteFromId) {
-                    // User invited themselves, ignore
-                } else if (!isAuthReady) {
-                    // User not logged in, prompt them to log in/register
-                    showMessage(`Vous avez été invité par un ami ! Veuillez vous connecter ou vous inscrire pour l'ajouter. Son ID est : ${inviteFromId}.`);
-                }
             }
         });
     </script>
