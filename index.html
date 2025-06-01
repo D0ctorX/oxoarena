@@ -39,15 +39,15 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr); /* 5 colonnes de taille égale */
             grid-template-rows: repeat(5, 1fr);    /* 5 lignes de taille égale */
-            width: 90vw; /* Largeur fluide basée sur la largeur du viewport */
-            height: 90vw; /* Hauteur fluide pour maintenir le ratio */
-            max-width: 400px; /* Largeur maximale pour les grands écrans */
-            max-height: 400px; /* Hauteur maximale pour les grands écrans */
+            /* Nouvelle approche pour garantir un carré parfait */
+            width: min(90vw, 400px); /* Prend 90% de la largeur du viewport, max 400px */
+            height: min(90vw, 400px); /* Prend la même valeur pour la hauteur pour un carré parfait */
             border: 2px solid #1A2B3C; /* Bordure foncée du thème */
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée */
             border-radius: 0.75rem; /* Coins arrondis */
             background-color: #ffffff; /* Fond blanc pour le plateau */
             overflow: hidden; /* Assure que les coins arrondis des cellules sont contenus */
+            flex-shrink: 0; /* Empêche le plateau de rétrécir dans un conteneur flex */
         }
 
         .cell {
@@ -56,23 +56,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2rem; /* Taille du symbole X/O par défaut (mobile) */
+            /* Utilisation de min() pour une taille de police réactive mais plafonnée */
+            font-size: min(8vw, 2.5rem); /* Adapte la taille de la police, max 2.5rem */
             font-weight: bold;
             cursor: pointer;
             border: 1px solid #e0e0e0; /* Bordure de cellule plus claire */
             transition: background-color 0.2s ease-in-out;
             color: #1A2B3C; /* Couleur par default du texte (sombre du thème) */
             user-select: none; /* Empêche la sélection du texte */
-        }
-        @media (min-width: 640px) { /* sm breakpoint */
-            .cell {
-                font-size: 2.5rem;
-            }
-        }
-        @media (min-width: 768px) { /* md breakpoint */
-            .cell {
-                font-size: 3rem; /* Plus grand pour les écrans de bureau */
-            }
+            box-sizing: border-box; /* Inclut padding et bordure dans la taille de l'élément */
         }
 
         .cell:hover {
@@ -589,6 +581,7 @@
                         <span id="profile-games-played" class="font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
+                        <span class="font-semibold">Victoires :</span>
                         <span id="profile-wins" class="text-green-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
@@ -926,7 +919,7 @@
         // --- Firebase Initialization ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'oxoarena'; // Default to 'oxoarena' if not provided by Canvas
         let firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         if (Object.keys(firebaseConfig).length === 0) {
             console.warn("Firebase: Exécution locale. Utilisation de la configuration Firebase fournie par l'utilisateur.");
@@ -1008,7 +1001,7 @@
                     }
 
                 } else {
-                    console.log("Firebase: No user signed in. Attempting sign-in...");
+                    console.log("Firebase: No user signed in. Attempting sign-in.");
                     try {
                         if (initialAuthToken) {
                             await signInWithCustomToken(auth, initialAuthToken);
@@ -1459,7 +1452,7 @@
         const blockUserButton = document.getElementById('block-user-button');
         const unblockUserButton = document.getElementById('unblock-user-button');
         const proposeGameButton = document.getElementById('propose-game-button');
-        
+
         const notificationButton = document.getElementById('notification-button');
         const notificationCount = document.getElementById('notification-count');
         const notificationModalOverlay = document.getElementById('notification-modal-overlay');
@@ -1495,6 +1488,7 @@
         let localCurrentPlayer = 'X';
         let localGameActive = true;
         let localMovesHistory = [];
+        let localCells; // Déclaré ici, initialisé dans createCells
 
         // --- Variables et éléments du DOM pour le jeu IA ---
         const aiStatusDisplay = document.getElementById('ai-game-status');
@@ -1513,7 +1507,7 @@
         let aiGameActive = false;
         let aiDifficulty = null;
         const MINIMAX_MAX_DEPTH = 4;
-        let aiCells;
+        let aiCells; // Déclaré ici, initialisé dans createCells
         let aiMovesHistory = [];
 
         // --- Constantes de jeu communes ---
@@ -1572,6 +1566,7 @@
                 }
                 currentBoardElement.appendChild(cell);
             }
+            // Initialiser les tableaux de cellules après la création des éléments DOM
             if (boardElementId === 'local-board') {
                 localCells = Array.from(document.querySelectorAll('#local-board .cell'));
             } else if (boardElementId === 'ai-board') {
@@ -1721,10 +1716,13 @@
             localGameActive = true;
             localMovesHistory = [];
             updateStatus(`Au tour de : ${localCurrentPlayer}`, 'local');
-            localCells.forEach(cell => {
-                cell.innerHTML = '';
-                cell.classList.remove('x', 'o');
-            });
+            // Assurez-vous que localCells est bien initialisé avant de l'utiliser
+            if (localCells) {
+                localCells.forEach(cell => {
+                    cell.innerHTML = '';
+                    cell.classList.remove('x', 'o');
+                });
+            }
             localGameScreen.classList.remove('hidden');
         };
 
@@ -2042,10 +2040,13 @@
             aiGameActive = true;
             aiMovesHistory = [];
             updateStatus(`Au tour de : ${aiCurrentPlayer}`, 'ai');
-            aiCells.forEach(cell => {
-                cell.innerHTML = '';
-                cell.classList.remove('x', 'o');
-            });
+            // Assurez-vous que aiCells est bien initialisé avant de l'utiliser
+            if (aiCells) {
+                aiCells.forEach(cell => {
+                    cell.innerHTML = '';
+                    cell.classList.remove('x', 'o');
+                });
+            }
             aiGameScreen.classList.remove('hidden');
             if (aiDifficulty) {
                 document.getElementById(`${aiDifficulty}-button`).classList.add('selected-difficulty');
@@ -2281,7 +2282,7 @@
                         } else {
                             statusToShow = 'loss';
                         }
-                        
+
                         // Set isInGame to false for both players once the game is truly finished/abandoned
                         await updateDoc(doc(db, `artifacts/${appId}/users/${currentUserId}/profile`, 'data'), { isInGame: false });
                         if (onlineOpponentUserId) {
@@ -2776,7 +2777,7 @@
             blockUserButton.classList.add('hidden');
             unblockUserButton.classList.add('hidden');
             proposeGameButton.classList.add('hidden');
-            
+
             // Determine friendship status and show relevant buttons
             const { user1Id, user2Id } = getOrderedUserIds(currentUserId, targetUserId);
             const q = query(
@@ -3707,6 +3708,7 @@
                 playLocalButton.addEventListener('click', function() {
                     hideAllScreens();
                     localGameScreen.classList.remove('hidden');
+                    // Passer le gestionnaire de clic lors de la création des cellules
                     createCells('local-board', handleLocalCellClick);
                     resetLocalGame();
                 });
@@ -3727,6 +3729,7 @@
                 playAIButton.addEventListener('click', function() {
                     hideAllScreens();
                     aiGameScreen.classList.remove('hidden');
+                    // Passer le gestionnaire de clic lors de la création des cellules
                     createCells('ai-board', handleAICellClick);
                     updateStatus("Sélectionnez une difficulté pour commencer", 'ai');
                     aiGameActive = false;
@@ -3851,7 +3854,7 @@
             unfriendButton.addEventListener('click', () => unfriend(modalProfileId.textContent));
             blockUserButton.addEventListener('click', () => blockUser(modalProfileId.textContent));
             unblockUserButton.addEventListener('click', () => unblockUser(modalProfileId.textContent));
-            
+
             // Propose Game Button Listener
             proposeGameButton.addEventListener('click', () => sendGameInvitation(modalProfileId.textContent, modalProfileUsername.textContent));
 
