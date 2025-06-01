@@ -1032,7 +1032,7 @@
                 apiKey: "AIzaSyCTAax7cKcxL29HwwVgRxD8AfqDzx8tG6A",
                 authDomain: "oxoarena-2476d.firebaseapp.com",
                 projectId: "oxoarena-2476d",
-                storageBucket: "oxoarena-2476d.firebasestorage.app",
+                storageBucket: "oxoarena-2476d.firebaseolage.app",
                 messagingSenderId: "1071875114714",
                 appId: "1:1071875114714:web:0658dedac66047438f07e3",
                 measurementId: "G-3N7C3R5HYV"
@@ -1060,7 +1060,7 @@
         let currentOnlineGameMode = 'classic'; // Default to classic, can be 'blitz'
 
         // Timer variables for online games
-        const BLITZ_TIME_LIMIT_MS = 60 * 1000; // 1 minute in milliseconds
+        const BLITZ_TIME_LIMIT_MS = 30 * 1000; // 30 seconds in milliseconds
         let playerXTime = BLITZ_TIME_LIMIT_MS;
         let playerOTime = BLITZ_TIME_LIMIT_MS;
         let timerInterval = null;
@@ -1214,13 +1214,13 @@
 
         // --- User Profile Functions ---
         const defaultUserProfile = {
-            eloClassic: 1200, // Elo for classic games
+            eloClassic: 0, // Elo for classic games, starts at 0
             levelClassic: 0,
             gamesPlayedClassic: 0,
             winsClassic: 0,
             lossesClassic: 0,
             drawsClassic: 0,
-            eloBlitz: 1200, // Elo for blitz games
+            eloBlitz: 0, // Elo for blitz games, starts at 0
             levelBlitz: 0,
             gamesPlayedBlitz: 0,
             winsBlitz: 0,
@@ -2459,10 +2459,19 @@
             if (gameMode === 'blitz') {
                 playerXTime = BLITZ_TIME_LIMIT_MS;
                 playerOTime = BLITZ_TIME_LIMIT_MS;
-            } else {
+                // Ensure timers are visible for blitz
+                playerTimeDisplay.classList.remove('hidden');
+                opponentTimeDisplay.classList.remove('hidden');
+            } else { // Classic mode
                 playerXTime = -1; // Indicate no timer for classic
                 playerOTime = -1;
+                // Hide timers completely for classic
+                playerTimeDisplay.classList.add('hidden');
+                opponentTimeDisplay.classList.add('hidden');
+                if (timerInterval) clearInterval(timerInterval); // Ensure timer is stopped
+                timerInterval = null;
             }
+            updateTimerDisplay(); // Ensure display is updated immediately after setting times
 
             hideAllScreens();
             onlineGameScreen.classList.remove('hidden');
@@ -2622,18 +2631,22 @@
 
         // Function to update timer display on UI
         function updateTimerDisplay() {
-            const playerTime = (currentOnlinePlayerRole === 'X') ? playerXTime : playerOTime;
-            const opponentTime = (currentOnlinePlayerRole === 'X') ? playerOTime : playerXTime;
+            // Only update if in blitz mode, otherwise, they should be hidden
+            if (currentOnlineGameMode === 'blitz') {
+                const playerTime = (currentOnlinePlayerRole === 'X') ? playerXTime : playerOTime;
+                const opponentTime = (currentOnlinePlayerRole === 'X') ? playerOTime : playerXTime;
 
-            playerTimeDisplay.textContent = formatTime(playerTime);
-            opponentTimeDisplay.textContent = formatTime(opponentTime);
+                playerTimeDisplay.textContent = formatTime(playerTime);
+                opponentTimeDisplay.textContent = formatTime(opponentTime);
 
-            // Update active/low-time classes
-            playerTimeDisplay.classList.toggle('active', onlineGameActive && onlineCurrentTurn === currentOnlinePlayerRole);
-            opponentTimeDisplay.classList.toggle('active', onlineGameActive && onlineCurrentTurn !== currentOnlinePlayerRole);
+                // Update active/low-time classes
+                playerTimeDisplay.classList.toggle('active', onlineGameActive && onlineCurrentTurn === currentOnlinePlayerRole);
+                opponentTimeDisplay.classList.toggle('active', onlineGameActive && onlineCurrentTurn !== currentOnlinePlayerRole);
 
-            playerTimeDisplay.classList.toggle('low-time', playerTime <= 10000 && playerTime > 0); // 10 seconds or less
-            opponentTimeDisplay.classList.toggle('low-time', opponentTime <= 10000 && opponentTime > 0);
+                playerTimeDisplay.classList.toggle('low-time', playerTime <= 10000 && playerTime > 0); // 10 seconds or less
+                opponentTimeDisplay.classList.toggle('low-time', opponentTime <= 10000 && opponentTime > 0);
+            }
+            // If in classic mode, the elements are already hidden by startGameOnline, so no display update is needed.
         }
 
         // Handle timeout
@@ -4300,19 +4313,36 @@
             proposeGameButton.addEventListener('click', async () => {
                 // For simplicity, let's assume "Proposer Partie" always proposes a classic game for now.
                 // If you want to add mode selection here, we'd need another small modal.
-                // For now, it will propose a classic game.
+                // For now, it will just send a classic invite.
                 const targetUserId = modalProfileId.textContent;
                 const targetUsername = modalProfileUsername.textContent;
-                showMessage(`Voulez-vous proposer une partie Classique ou Blitz à ${targetUsername}?`, () => {
-                    // This is a placeholder for a choice. For now, let's just propose classic.
-                    // In a real app, you'd show a modal with two buttons "Classique" and "Blitz"
-                    // and then call sendGameInvitation with the chosen mode.
-                    // For this iteration, I'll just send a classic invite.
-                    sendGameInvitation(targetUserId, targetUsername, 'classic'); // Default to classic
+
+                // Create a temporary modal for game mode selection
+                const modeSelectionModal = document.createElement('div');
+                modeSelectionModal.classList.add('modal-overlay');
+                modeSelectionModal.innerHTML = `
+                    <div class="modal-content">
+                        <button class="modal-close-button" id="mode-selection-modal-close"><i class="fas fa-times"></i></button>
+                        <h2 class="text-3xl font-bold text-center text-[#1A2B3C] mb-4">Proposer une partie à ${targetUsername}</h2>
+                        <p class="text-xl text-center text-gray-700 mb-6">Choisissez le mode de jeu :</p>
+                        <div class="flex justify-center gap-4">
+                            <button id="propose-classic-button" class="game-button px-6 py-3 bg-[#1A2B3C] hover:bg-gray-800">Classique</button>
+                            <button id="propose-blitz-button" class="game-button px-6 py-3 bg-[#FFD700] text-[#1A2B3C] hover:bg-yellow-400">Blitz</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modeSelectionModal);
+
+                // Add event listeners for the new modal buttons
+                document.getElementById('mode-selection-modal-close').addEventListener('click', () => modeSelectionModal.remove());
+                document.getElementById('propose-classic-button').addEventListener('click', () => {
+                    sendGameInvitation(targetUserId, targetUsername, 'classic');
+                    modeSelectionModal.remove();
                 });
-                // To implement a choice, you'd need to create a new small modal here
-                // with two buttons, "Classique" and "Blitz", each calling sendGameInvitation
-                // with the appropriate mode.
+                document.getElementById('propose-blitz-button').addEventListener('click', () => {
+                    sendGameInvitation(targetUserId, targetUsername, 'blitz');
+                    modeSelectionModal.remove();
+                });
             });
 
             // Notification Modal Actions
