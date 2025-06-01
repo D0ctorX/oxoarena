@@ -498,6 +498,53 @@
         .notification-item .actions .decline-button:hover {
             background-color: #DC2626;
         }
+
+        /* Styles pour les chronomètres */
+        .timer-display {
+            font-size: 2.2rem; /* Taille plus grande pour les chronos */
+            font-weight: bold;
+            color: #1A2B3C;
+            background-color: #E0E0E0; /* Fond légèrement gris */
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            min-width: 150px; /* Largeur minimale pour éviter le saut */
+            text-align: center;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .timer-display.active {
+            background-color: #FFD700; /* Jaune pour le joueur actif */
+            color: #1A2B3C;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        .timer-display.low-time {
+            background-color: #EF4444; /* Rouge pour le temps faible */
+            color: white;
+        }
+
+        /* Styles pour le bouton de toggle (Classique/Blitz) */
+        .toggle-button-group {
+            display: flex;
+            background-color: #e0e0e0;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .toggle-button {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: #6B7280;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .toggle-button.active {
+            background-color: #1A2B3C;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .toggle-button:hover:not(.active) {
+            background-color: #cccccc;
+        }
+
     </style>
 </head>
 <body class="background-pattern">
@@ -567,8 +614,12 @@
                         <p id="username-cooldown-message" class="text-xs text-red-600 mt-1 text-center w-full hidden"></p>
                     </div>
                     <p class="flex justify-between items-center">
-                        <span class="font-semibold">Elo :</span>
-                        <span id="profile-elo" class="text-[#FFD700] font-bold"></span>
+                        <span class="font-semibold">Elo (Classique) :</span>
+                        <span id="profile-elo-classic" class="text-[#FFD700] font-bold"></span>
+                    </p>
+                    <p class="flex justify-between items-center">
+                        <span class="font-semibold">Elo (Blitz) :</span>
+                        <span id="profile-elo-blitz" class="text-[#FFD700] font-bold"></span>
                     </p>
                     <p class="flex justify-between items-center">
                         <span class="font-semibold">Niveau :</span>
@@ -576,6 +627,12 @@
                     </p>
                     <div class="border-t border-gray-300 pt-4 mt-4"></div>
                     <h3 class="text-xl font-bold mb-2 text-center">Statistiques</h3>
+                    <div class="flex justify-center mb-4">
+                        <div class="toggle-button-group">
+                            <button id="stats-toggle-classic" class="toggle-button active">Classique</button>
+                            <button id="stats-toggle-blitz" class="toggle-button">Blitz</button>
+                        </div>
+                    </div>
                     <p class="flex justify-between items-center">
                         <span class="font-semibold">Parties jouées :</span>
                         <span id="profile-games-played" class="font-medium"></span>
@@ -585,9 +642,11 @@
                         <span id="profile-wins" class="text-green-600 font-medium"></span>
                     </p>
                     <p class="flex justify-between items-center">
+                        <span class="font-semibold">Défaites :</span>
                         <span id="profile-losses" class="text-red-600 font-medium"></span>
                     </p>
-                    <p class="flex justify-between items-center">
+                    <p class="flex justify-between items-center" id="profile-draws-row">
+                        <span class="font-semibold">Nuls :</span>
                         <span id="profile-draws" class="text-gray-500 font-medium"></span>
                     </p>
                 </div>
@@ -600,8 +659,35 @@
             </div>
         </div>
 
+        <div id="online-play-selection-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <h1 class="text-4xl font-extrabold mb-8 text-center">Jouer en Ligne</h1>
+            <p class="text-lg text-gray-600 mb-8 text-center">
+                Choisissez votre mode de jeu en ligne.
+            </p>
+            <div class="w-full space-y-6">
+                <button id="select-classic-online-button" class="w-full py-4 px-6 bg-[#1A2B3C] text-white font-semibold rounded-lg shadow-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-4 text-xl">
+                    <i class="fas fa-chess-board h-8 w-8"></i> <span>Classique</span>
+                </button>
+                <button id="select-blitz-online-button" class="w-full py-4 px-6 bg-[#FFD700] text-[#1A2B3C] font-semibold rounded-lg shadow-lg hover:bg-yellow-400 transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-4 text-xl">
+                    <i class="fas fa-stopwatch h-8 w-8"></i> <span>Blitz</span>
+                </button>
+            </div>
+            <button id="online-selection-back-to-home-button" class="game-button mt-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+                </svg>
+                <span>Retour à l'Accueil</span>
+            </button>
+        </div>
+
         <div id="leaderboard-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full text-[#1A2B3C] max-h-[calc(100vh-2rem)] overflow-y-auto">
             <h1 class="text-4xl font-extrabold mb-6 text-center">Classement des Joueurs</h1>
+            <div class="flex justify-center mb-6">
+                <div class="toggle-button-group">
+                    <button id="leaderboard-toggle-classic" class="toggle-button active">Classique</button>
+                    <button id="leaderboard-toggle-blitz" class="toggle-button">Blitz</button>
+                </div>
+            </div>
             <div id="leaderboard-list" class="leaderboard-list">
                 <div class="text-center p-4 text-gray-500">Chargement du classement...</div>
             </div>
@@ -696,6 +782,18 @@
                 <p>Adversaire : <span id="online-opponent-username" class="font-semibold text-sm"></span></p>
                 <p>Elo : <span id="online-opponent-elo" class="font-semibold text-sm"></span> | Niveau : <span id="online-opponent-level" class="font-semibold text-sm"></span></p>
             </div>
+
+            <div class="flex justify-around w-full mb-6 gap-4">
+                <div class="flex flex-col items-center">
+                    <span class="text-lg font-semibold text-gray-700">Votre Temps:</span>
+                    <div id="player-time-display" class="timer-display">00:00.00</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <span class="text-lg font-semibold text-gray-700">Temps Adversaire:</span>
+                    <div id="opponent-time-display" class="timer-display">00:00.00</div>
+                </div>
+            </div>
+
             <div id="online-game-status" class="text-2xl font-semibold mb-6 text-center text-[#1A2B3C]"></div>
 
             <div id="online-board" class="board-grid"></div>
@@ -829,8 +927,12 @@
 
             <div class="bg-gray-100 p-4 rounded-xl shadow-inner w-full space-y-3 text-base">
                 <p class="flex justify-between items-center">
-                    <span class="font-semibold">Elo :</span>
-                    <span id="modal-profile-elo" class="text-[#FFD700] font-bold"></span>
+                    <span class="font-semibold">Elo (Classique) :</span>
+                    <span id="modal-profile-elo-classic" class="text-[#FFD700] font-bold"></span>
+                </p>
+                <p class="flex justify-between items-center">
+                    <span class="font-semibold">Elo (Blitz) :</span>
+                    <span id="modal-profile-elo-blitz" class="text-[#FFD700] font-bold"></span>
                 </p>
                 <p class="flex justify-between items-center">
                     <span class="font-semibold">Niveau :</span>
@@ -838,6 +940,9 @@
                 </p>
                 <div class="border-t border-gray-300 pt-4 mt-4"></div>
                 <h3 class="text-xl font-bold mb-2 text-center">Statistiques</h3>
+                <p class="text-center text-gray-600 italic text-sm">
+                    Les statistiques affichées sont celles du mode Classique.
+                </p>
                 <p class="flex justify-between items-center">
                     <span class="font-semibold">Parties jouées :</span>
                     <span id="modal-profile-games-played" class="font-medium"></span>
@@ -952,6 +1057,14 @@
         let onlineGameListenerUnsubscribe = null;
         let onlineOpponentUserId = null; // Store opponent's user ID
         let onlineOpponentProfile = null; // Store opponent's profile data
+        let currentOnlineGameMode = 'classic'; // Default to classic, can be 'blitz'
+
+        // Timer variables for online games
+        const BLITZ_TIME_LIMIT_MS = 60 * 1000; // 1 minute in milliseconds
+        let playerXTime = BLITZ_TIME_LIMIT_MS;
+        let playerOTime = BLITZ_TIME_LIMIT_MS;
+        let timerInterval = null;
+        let lastMoveTimestamp = null; // Timestamp of the last move from the server
 
         // Friend System Variables
         let friendsListenerUnsubscribe = null;
@@ -970,6 +1083,11 @@
 
         // Variable to store the invite_from ID from the URL, if present
         let urlInviteFromId = null;
+
+        // Current display mode for stats and leaderboard
+        let currentStatsDisplayMode = 'classic'; // 'classic' or 'blitz'
+        let currentLeaderboardDisplayMode = 'classic'; // 'classic' or 'blitz'
+
 
         if (Object.keys(firebaseConfig).length > 0 && firebaseConfig.apiKey) {
             app = initializeApp(firebaseConfig);
@@ -1023,7 +1141,8 @@
                     document.getElementById('profile-content').classList.remove('hidden');
                     document.getElementById('user-id-display').textContent = 'Non connecté (Firebase désactivé)';
                     document.getElementById('profile-username').textContent = 'Invité'; // Default for anonymous
-                    document.getElementById('profile-elo').textContent = 'N/A';
+                    document.getElementById('profile-elo-classic').textContent = 'N/A'; // Update for classic
+                    document.getElementById('profile-elo-blitz').textContent = 'N/A'; // Update for blitz
                     document.getElementById('profile-level').textContent = 'N/A';
                     document.getElementById('profile-games-played').textContent = 'N/A';
                     document.getElementById('profile-wins').textContent = 'N/A';
@@ -1045,7 +1164,8 @@
             document.getElementById('profile-loading').classList.add('hidden');
             document.getElementById('profile-content').classList.remove('hidden');
             document.getElementById('user-id-display').textContent = 'Non connecté (Firebase désactivé)';
-            document.getElementById('profile-elo').textContent = 'N/A';
+            document.getElementById('profile-elo-classic').textContent = 'N/A'; // Update for classic
+            document.getElementById('profile-elo-blitz').textContent = 'N/A'; // Update for blitz
             document.getElementById('profile-level').textContent = 'N/A';
             document.getElementById('profile-games-played').textContent = 'N/A';
             document.getElementById('profile-wins').textContent = 'N/A';
@@ -1094,12 +1214,18 @@
 
         // --- User Profile Functions ---
         const defaultUserProfile = {
-            elo: 0,
-            level: 0,
-            gamesPlayed: 0,
-            wins: 0,
-            losses: 0,
-            draws: 0,
+            eloClassic: 1200, // Elo for classic games
+            levelClassic: 0,
+            gamesPlayedClassic: 0,
+            winsClassic: 0,
+            lossesClassic: 0,
+            drawsClassic: 0,
+            eloBlitz: 1200, // Elo for blitz games
+            levelBlitz: 0,
+            gamesPlayedBlitz: 0,
+            winsBlitz: 0,
+            lossesBlitz: 0,
+            drawsBlitz: 0, // Should typically be 0 for blitz, but kept for data consistency
             username: 'Joueur' + Math.floor(Math.random() * 10000), // Default username
             lastUsernameChange: null, // No previous change
             lastOnline: serverTimestamp(), // New field for presence
@@ -1143,6 +1269,30 @@
                             profileData[key] = defaultUserProfile[key];
                         }
                     }
+                    // Handle old Elo field if it exists and migrate to eloClassic if needed
+                    if (profileData.elo !== undefined && profileData.eloClassic === undefined) {
+                        profileData.eloClassic = profileData.elo;
+                        delete profileData.elo; // Remove old field
+                    }
+                    // Handle old gamesPlayed field and migrate
+                    if (profileData.gamesPlayed !== undefined && profileData.gamesPlayedClassic === undefined) {
+                        profileData.gamesPlayedClassic = profileData.gamesPlayed;
+                        profileData.winsClassic = profileData.wins;
+                        profileData.lossesClassic = profileData.losses;
+                        profileData.drawsClassic = profileData.draws;
+                        delete profileData.gamesPlayed;
+                        delete profileData.wins;
+                        delete profileData.losses;
+                        delete profileData.draws;
+                    }
+                    // Ensure blitz fields are initialized if missing
+                    if (profileData.eloBlitz === undefined) profileData.eloBlitz = defaultUserProfile.eloBlitz;
+                    if (profileData.gamesPlayedBlitz === undefined) profileData.gamesPlayedBlitz = defaultUserProfile.gamesPlayedBlitz;
+                    if (profileData.winsBlitz === undefined) profileData.winsBlitz = defaultUserProfile.winsBlitz;
+                    if (profileData.lossesBlitz === undefined) profileData.lossesBlitz = defaultUserProfile.lossesBlitz;
+                    if (profileData.drawsBlitz === undefined) profileData.drawsBlitz = defaultUserProfile.drawsBlitz;
+
+
                     console.log("Firebase: Profil utilisateur récupéré :", profileData);
                 } else {
                     console.log("Firebase: Pas de profil utilisateur trouvé, création par défaut.");
@@ -1162,7 +1312,8 @@
             }
         }
 
-        async function updateUserProfileStats(userId, gameResult, opponentElo = null) {
+        // Modified updateUserProfileStats to handle game modes
+        async function updateUserProfileStats(userId, gameResult, gameMode, opponentElo = null) {
             if (!db || !userId || !isAuthReady) {
                 console.error("Firebase: Firestore, userId, ou auth non prêt pour la mise à jour.");
                 return;
@@ -1173,40 +1324,56 @@
                 const docSnap = await getDoc(userProfileRef);
                 let currentProfile = docSnap.exists() ? docSnap.data() : { ...defaultUserProfile };
 
-                currentProfile.gamesPlayed = (currentProfile.gamesPlayed || 0) + 1;
+                let eloField = `elo${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`; // e.g., 'eloClassic' or 'eloBlitz'
+                let gamesPlayedField = `gamesPlayed${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
+                let winsField = `wins${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
+                let lossesField = `losses${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
+                let drawsField = `draws${gameMode.charAt(0).toUpperCase() + gameMode.slice(1)}`;
+
+                currentProfile[gamesPlayedField] = (currentProfile[gamesPlayedField] || 0) + 1;
 
                 let eloChange = 0;
+                let currentElo = currentProfile[eloField] || 0;
+
                 if (gameResult === 'win') {
-                    currentProfile.wins = (currentProfile.wins || 0) + 1;
+                    currentProfile[winsField] = (currentProfile[winsField] || 0) + 1;
                     if (opponentElo !== null) {
-                        // K-factor logic for Elo change based on opponent's Elo
-                        if (currentProfile.elo >= opponentElo) {
-                            eloChange = 8; // Smaller gain for winning against lower/equal Elo
+                        if (currentElo >= opponentElo) {
+                            eloChange = 8;
                         } else {
-                            eloChange = 15; // Larger gain for winning against higher Elo
+                            eloChange = 15;
                         }
                     } else {
-                        eloChange = 10; // Default gain for AI hard mode or if opponent Elo is unknown
+                        eloChange = 10;
                     }
                 } else if (gameResult === 'loss') {
-                    currentProfile.losses = (currentProfile.losses || 0) + 1;
+                    currentProfile[lossesField] = (currentProfile[lossesField] || 0) + 1;
                     if (opponentElo !== null) {
-                        // K-factor logic for Elo change based on opponent's Elo
-                        if (currentProfile.elo >= opponentElo) {
-                            eloChange = -15; // Larger loss for losing against lower/equal Elo
+                        if (currentElo >= opponentElo) {
+                            eloChange = -15;
                         } else {
-                            eloChange = -8; // Smaller loss for losing against higher Elo
+                            eloChange = -8;
                         }
                     } else {
-                        eloChange = -5; // Default loss for AI hard mode or if opponent Elo is unknown
+                        eloChange = -5;
                     }
                 } else if (gameResult === 'draw') {
-                    currentProfile.draws = (currentProfile.draws || 0) + 1;
-                    eloChange = 1; // Small Elo gain for a draw
+                    // Only count draws for classic mode
+                    if (gameMode === 'classic') {
+                        currentProfile[drawsField] = (currentProfile[drawsField] || 0) + 1;
+                        eloChange = 1;
+                    } else {
+                        // For blitz, draws are typically not possible if time runs out,
+                        // but if the board is full and no winner, it's still a draw.
+                        // However, per user request, no draws for blitz stats.
+                        eloChange = 0; // No Elo change for blitz draws
+                    }
                 }
 
-                currentProfile.elo = Math.max(0, (currentProfile.elo || 0) + eloChange);
-                currentProfile.level = Math.min(MAX_LEVEL, Math.floor((currentProfile.elo || 0) / 25));
+                currentProfile[eloField] = Math.max(0, currentElo + eloChange);
+                // Level is still based on classic Elo for now, or could be a separate level for each mode
+                currentProfile.level = Math.min(MAX_LEVEL, Math.floor((currentProfile.eloClassic || 0) / 25));
+
 
                 await setDoc(userProfileRef, currentProfile);
                 console.log("Firebase: User profile updated successfully.", currentProfile);
@@ -1249,15 +1416,16 @@
             });
         }
 
+        // Modified displayUserProfile to show both Elos and handle stats toggle
         function displayUserProfile(userId, profile) {
             document.getElementById('user-id-display').textContent = userId;
             profileUsername.textContent = profile.username;
-            document.getElementById('profile-elo').textContent = profile.elo;
-            document.getElementById('profile-level').textContent = `${profile.level}/${MAX_LEVEL}`;
-            document.getElementById('profile-games-played').textContent = profile.gamesPlayed;
-            document.getElementById('profile-wins').textContent = profile.wins;
-            document.getElementById('profile-losses').textContent = profile.losses;
-            document.getElementById('profile-draws').textContent = profile.draws;
+            document.getElementById('profile-elo-classic').textContent = profile.eloClassic || 0; // Display classic Elo
+            document.getElementById('profile-elo-blitz').textContent = profile.eloBlitz || 0; // Display blitz Elo
+            document.getElementById('profile-level').textContent = `${profile.level || 0}/${MAX_LEVEL}`; // Level based on classic Elo
+
+            // Update displayed stats based on currentStatsDisplayMode
+            updateDisplayedStats(currentStatsDisplayMode);
 
             const fifteenDaysInMs = 15 * 24 * 60 * 60 * 1000;
             const now = Date.now();
@@ -1286,6 +1454,41 @@
                 changeUsernameButton.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
+
+        // Function to update displayed stats based on mode
+        function updateDisplayedStats(mode) {
+            if (!userProfileData) return;
+
+            let gamesPlayed = 0;
+            let wins = 0;
+            let losses = 0;
+            let draws = 0;
+
+            if (mode === 'classic') {
+                gamesPlayed = userProfileData.gamesPlayedClassic || 0;
+                wins = userProfileData.winsClassic || 0;
+                losses = userProfileData.lossesClassic || 0;
+                draws = userProfileData.drawsClassic || 0;
+                document.getElementById('profile-draws-row').classList.remove('hidden'); // Show draws for classic
+            } else if (mode === 'blitz') {
+                gamesPlayed = userProfileData.gamesPlayedBlitz || 0;
+                wins = userProfileData.winsBlitz || 0;
+                losses = userProfileData.lossesBlitz || 0;
+                draws = userProfileData.drawsBlitz || 0; // Will be 0 per requirement
+                document.getElementById('profile-draws-row').classList.add('hidden'); // Hide draws for blitz
+            }
+
+            document.getElementById('profile-games-played').textContent = gamesPlayed;
+            document.getElementById('profile-wins').textContent = wins;
+            document.getElementById('profile-losses').textContent = losses;
+            document.getElementById('profile-draws').textContent = draws;
+
+            // Update toggle button active state
+            document.getElementById('stats-toggle-classic').classList.remove('active');
+            document.getElementById('stats-toggle-blitz').classList.remove('active');
+            document.getElementById(`stats-toggle-${mode}`).classList.add('active');
+        }
+
 
         // --- Username Change Functions ---
         const profileUsername = document.getElementById('profile-username');
@@ -1400,6 +1603,7 @@
         const homeScreen = document.getElementById('home-screen');
         const localGameScreen = document.getElementById('local-game-screen');
         const aiGameScreen = document.getElementById('ai-game-screen');
+        const onlinePlaySelectionScreen = document.getElementById('online-play-selection-screen'); // NEW
         const onlineSearchingScreen = document.getElementById('online-searching-screen');
         const onlineGameScreen = document.getElementById('online-game-screen');
         const gameEndOverlay = document.getElementById('game-end-overlay');
@@ -1437,7 +1641,8 @@
         const modalProfileUsername = document.getElementById('modal-profile-username');
         const modalProfileId = document.getElementById('modal-profile-id');
         const modalProfileLastOnline = document.getElementById('modal-profile-last-online');
-        const modalProfileElo = document.getElementById('modal-profile-elo');
+        const modalProfileEloClassic = document.getElementById('modal-profile-elo-classic'); // NEW
+        const modalProfileEloBlitz = document.getElementById('modal-profile-elo-blitz');   // NEW
         const modalProfileLevel = document.getElementById('modal-profile-level');
         const modalProfileGamesPlayed = document.getElementById('modal-profile-games-played');
         const modalProfileWins = document.getElementById('modal-profile-wins');
@@ -1468,6 +1673,15 @@
         const declineGameInviteButton = document.getElementById('decline-game-invite-button');
         const gameInviteStatusMessage = document.getElementById('game-invite-status-message');
 
+        // NEW: Online Play Selection Buttons
+        const selectClassicOnlineButton = document.getElementById('select-classic-online-button');
+        const selectBlitzOnlineButton = document.getElementById('select-blitz-online-button');
+        const onlineSelectionBackToHomeButton = document.getElementById('online-selection-back-to-home-button');
+
+        // NEW: Timer elements
+        const playerTimeDisplay = document.getElementById('player-time-display');
+        const opponentTimeDisplay = document.getElementById('opponent-time-display');
+
 
         const playOnlineButton = document.getElementById('playOnlineButton');
         const playLocalButton = document.getElementById('playLocalButton');
@@ -1476,6 +1690,12 @@
         const showLeaderboardButton = document.getElementById('showLeaderboardButton');
         const leaderboardBackToHomeButton = document.getElementById('leaderboard-back-to-home-button');
         const historyBackButton = document.getElementById('history-back-button');
+
+        // Toggle buttons for stats and leaderboard
+        const statsToggleClassic = document.getElementById('stats-toggle-classic');
+        const statsToggleBlitz = document.getElementById('stats-toggle-blitz');
+        const leaderboardToggleClassic = document.getElementById('leaderboard-toggle-classic');
+        const leaderboardToggleBlitz = document.getElementById('leaderboard-toggle-blitz');
 
 
         // --- Variables et éléments du DOM pour le jeu local ---
@@ -1604,18 +1824,20 @@
         let currentOpponentName = '';
         const playerXMarker = 'X';
 
-        function showGameEndScreen(status, winner, gameType, finalBoardState, movesHistory) {
+        function showGameEndScreen(status, winner, gameType, finalBoardState, movesHistory, gameMode = 'classic') {
             localGameScreen.classList.add('hidden');
             aiGameScreen.classList.add('hidden');
             onlineGameScreen.classList.add('hidden');
             onlineSearchingScreen.classList.add('hidden');
+            onlinePlaySelectionScreen.classList.add('hidden'); // Ensure this is hidden too
 
             gameEndOverlay.classList.remove('hidden');
             gameEndBanner.classList.remove('hidden');
 
             gameEndTitle.textContent = '';
             gameEndMessage.textContent = '';
-            currentEndGameType = gameType;
+            currentEndGameType = gameType; // Store gameType (local, ai, online)
+            currentOnlineGameMode = gameMode; // Store gameMode (classic, blitz) for online games
 
             let title = '';
             let message = '';
@@ -1656,7 +1878,12 @@
                     title = 'DÉFAITE !';
                     message = `${onlineOpponentProfile ? onlineOpponentProfile.username : 'Votre adversaire'} a gagné.`;
                     historyStatus = 'lost';
-                } else {
+                } else if (status === 'timeout') { // Specific status for timeout loss
+                    title = 'DÉFAITE PAR TEMPS !';
+                    message = `Vous avez dépassé le temps. ${onlineOpponentProfile ? onlineOpponentProfile.username : 'Votre adversaire'} a gagné.`;
+                    historyStatus = 'lost'; // Timeout is still a loss for stats
+                }
+                else { // Default draw for online
                     title = 'MATCH NUL !';
                     message = 'Aucun vainqueur.';
                     historyStatus = 'draw';
@@ -1670,13 +1897,14 @@
             // Update user stats for online games and hard AI games
             if (isAuthReady && currentUserId) {
                 if (gameType === 'ai' && aiDifficulty === 'hard') {
-                    updateUserProfileStats(currentUserId, status);
+                    updateUserProfileStats(currentUserId, status, 'classic'); // AI hard is classic mode
                 } else if (gameType === 'online') {
-                    updateUserProfileStats(currentUserId, status, onlineOpponentProfile ? onlineOpponentProfile.elo : null);
+                    // Pass the actual gameMode to updateUserProfileStats
+                    updateUserProfileStats(currentUserId, status, currentOnlineGameMode, onlineOpponentProfile ? (currentOnlineGameMode === 'classic' ? onlineOpponentProfile.eloClassic : onlineOpponentProfile.eloBlitz) : null);
                 }
             }
 
-            saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, movesHistory, BOARD_SIZE, currentOnlineGameId);
+            saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, movesHistory, BOARD_SIZE, currentOnlineGameId, currentOnlineGameMode);
         }
 
         // --- Fonctions spécifiques au jeu local ---
@@ -2074,7 +2302,8 @@
 
         let matchmakingListenerUnsubscribe = null;
 
-        async function findOnlineMatch() {
+        // Modified findOnlineMatch to accept gameMode
+        async function findOnlineMatch(gameMode) {
             if (!db || !currentUserId || !isAuthReady) {
                 showMessage("Erreur: Firebase non prêt ou utilisateur non connecté.");
                 return;
@@ -2089,7 +2318,8 @@
             const queueCollectionRef = collection(db, 'matchmaking_queue');
 
             try {
-                const q = query(queueCollectionRef);
+                // Query for an opponent in the same game mode
+                const q = query(queueCollectionRef, where("gameMode", "==", gameMode));
                 const querySnapshot = await getDocs(q);
 
                 let foundOpponentId = null;
@@ -2120,7 +2350,10 @@
                         winner: null,
                         createdAt: serverTimestamp(),
                         lastMoveTime: serverTimestamp(),
-                        moves: []
+                        moves: [],
+                        gameMode: gameMode, // Store game mode
+                        playerXTime: BLITZ_TIME_LIMIT_MS, // Initial time for X
+                        playerOTime: BLITZ_TIME_LIMIT_MS  // Initial time for O
                     });
 
                     await updateDoc(foundOpponentDocRef, {
@@ -2135,7 +2368,7 @@
                     await updateDoc(doc(db, `artifacts/${appId}/users/${foundOpponentId}/profile`, 'data'), { isInGame: true });
 
                     console.log(`Matchmaking: Game ${gameId} created. Player X: ${foundOpponentId}, Player O: ${currentUserId}`);
-                    startGameOnline(gameId, 'O', foundOpponentId);
+                    startGameOnline(gameId, 'O', foundOpponentId, gameMode);
 
                 } else {
                     console.log("Matchmaking: No opponent found, entering queue.");
@@ -2143,9 +2376,10 @@
                         timestamp: serverTimestamp(),
                         status: 'searching',
                         opponentId: null,
-                        gameId: null
+                        gameId: null,
+                        gameMode: gameMode // Store game mode in queue
                     });
-                    console.log(`Matchmaking: User ${currentUserId} added to queue.`);
+                    console.log(`Matchmaking: User ${currentUserId} added to queue for ${gameMode} mode.`);
 
                     matchmakingListenerUnsubscribe = onSnapshot(doc(queueCollectionRef, currentUserId), async (docSnap) => { // Made async
                         if (docSnap.exists() && docSnap.data().gameId) {
@@ -2159,7 +2393,7 @@
                             if (data.opponentId) {
                                 await updateDoc(doc(db, `artifacts/${appId}/users/${data.opponentId}/profile`, 'data'), { isInGame: true });
                             }
-                            startGameOnline(data.gameId, 'X', data.opponentId);
+                            startGameOnline(data.gameId, 'X', data.opponentId, data.gameMode); // Pass gameMode
                             deleteDoc(doc(queueCollectionRef, currentUserId)).catch(() => {});
                         } else if (!docSnap.exists()) {
                             console.warn("Matchmaking: Notre entrée dans la file a été retirée. Si la partie ne démarre pas, il y a un problème.");
@@ -2210,14 +2444,25 @@
             }
         }
 
-        async function startGameOnline(gameId, playerRole, opponentId) {
-            console.log(`Starting online game: ${gameId} as player ${playerRole} against ${opponentId}`);
+        // Modified startGameOnline to accept gameMode and handle timers
+        async function startGameOnline(gameId, playerRole, opponentId, gameMode) {
+            console.log(`Starting online game: ${gameId} as player ${playerRole} against ${opponentId} in ${gameMode} mode.`);
             currentOnlineGameId = gameId;
             currentOnlinePlayerRole = playerRole;
             onlineOpponentUserId = opponentId;
             onlineGameActive = true;
             onlineBoard = Array(25).fill('');
             onlineCurrentTurn = 'X';
+            currentOnlineGameMode = gameMode; // Store the actual game mode
+
+            // Initialize times based on game mode
+            if (gameMode === 'blitz') {
+                playerXTime = BLITZ_TIME_LIMIT_MS;
+                playerOTime = BLITZ_TIME_LIMIT_MS;
+            } else {
+                playerXTime = -1; // Indicate no timer for classic
+                playerOTime = -1;
+            }
 
             hideAllScreens();
             onlineGameScreen.classList.remove('hidden');
@@ -2228,14 +2473,14 @@
             onlineOpponentProfile = allUserProfiles[onlineOpponentUserId] || await fetchUserProfile(onlineOpponentUserId);
             if (onlineOpponentProfile) {
                 document.getElementById('online-opponent-username').textContent = onlineOpponentProfile.username || 'Inconnu';
-                document.getElementById('online-opponent-elo').textContent = onlineOpponentProfile.elo || 'N/A';
+                // Display correct Elo based on game mode
+                document.getElementById('online-opponent-elo').textContent = (gameMode === 'classic' ? onlineOpponentProfile.eloClassic : onlineOpponentProfile.eloBlitz) || 'N/A';
                 document.getElementById('online-opponent-level').textContent = onlineOpponentProfile.level || 'N/A';
             } else {
                 document.getElementById('online-opponent-username').textContent = 'Chargement...';
                 document.getElementById('online-opponent-elo').textContent = 'N/A';
                 document.getElementById('online-opponent-level').textContent = 'N/A';
             }
-
 
             createCells('online-board', handleOnlineCellClick);
             updateStatus(`Au tour de : ${onlineCurrentTurn}`, 'online'); // Initial status from game data
@@ -2246,13 +2491,52 @@
                 if (docSnap.exists()) {
                     const gameData = docSnap.data();
                     console.log("Online game update received:", gameData);
-                    console.log("Received gameData.moves:", gameData.moves);
-                    console.log("Current User ID (in listener):", currentUserId);
-                    console.log("Current Player Role (in listener):", currentOnlinePlayerRole);
 
                     onlineBoard = gameData.board;
                     onlineCurrentTurn = gameData.currentPlayer;
                     onlineGameActive = gameData.status === 'active';
+
+                    // Update timers if it's a blitz game
+                    if (currentOnlineGameMode === 'blitz') {
+                        playerXTime = gameData.playerXTime || 0;
+                        playerOTime = gameData.playerOTime || 0;
+                        lastMoveTimestamp = gameData.lastMoveTime ? gameData.lastMoveTime.toDate().getTime() : Date.now(); // Convert Firestore Timestamp to JS Date
+
+                        // Stop any existing timer
+                        if (timerInterval) clearInterval(timerInterval);
+
+                        // Start timer for the current player if game is active
+                        if (onlineGameActive) {
+                            timerInterval = setInterval(() => {
+                                const now = Date.now();
+                                const timeElapsed = now - lastMoveTimestamp;
+
+                                if (onlineCurrentTurn === 'X') {
+                                    playerXTime = Math.max(0, BLITZ_TIME_LIMIT_MS - timeElapsed); // Recalculate based on last move
+                                    if (playerXTime <= 0) {
+                                        playerXTime = 0;
+                                        clearInterval(timerInterval);
+                                        handleTimeout('X');
+                                    }
+                                } else { // onlineCurrentTurn === 'O'
+                                    playerOTime = Math.max(0, BLITZ_TIME_LIMIT_MS - timeElapsed); // Recalculate based on last move
+                                    if (playerOTime <= 0) {
+                                        playerOTime = 0;
+                                        clearInterval(timerInterval);
+                                        handleTimeout('O');
+                                    }
+                                }
+                                updateTimerDisplay();
+                            }, 10); // Update every 10ms for hundredths
+                        }
+                    } else {
+                        // For classic mode, ensure timers are not displayed/active
+                        playerTimeDisplay.textContent = '--:--.--';
+                        opponentTimeDisplay.textContent = '--:--.--';
+                        playerTimeDisplay.classList.remove('active', 'low-time');
+                        opponentTimeDisplay.classList.remove('active', 'low-time');
+                        if (timerInterval) clearInterval(timerInterval);
+                    }
 
                     for (let i = 0; i < onlineBoard.length; i++) {
                         const cell = onlineCells[i];
@@ -2263,11 +2547,15 @@
                         }
                     }
 
-                    if (gameData.status === 'finished' || gameData.status === 'abandoned') {
+                    if (gameData.status === 'finished' || gameData.status === 'abandoned' || gameData.status === 'timeout') {
                         onlineGameActive = false;
                         if (onlineGameListenerUnsubscribe) {
                             onlineGameListenerUnsubscribe();
                             onlineGameListenerUnsubscribe = null;
+                        }
+                        if (timerInterval) {
+                            clearInterval(timerInterval); // Stop timer on game end
+                            timerInterval = null;
                         }
 
                         // Fetch the final game data one last time to ensure we have the complete moves history
@@ -2279,7 +2567,10 @@
                             statusToShow = 'win';
                         } else if (gameData.winner === 'draw') {
                             statusToShow = 'draw';
-                        } else {
+                        } else if (gameData.status === 'timeout') { // If game ended by timeout
+                            statusToShow = (gameData.winner === currentOnlinePlayerRole) ? 'win' : 'loss'; // Determine win/loss based on winner field
+                        }
+                        else {
                             statusToShow = 'loss';
                         }
 
@@ -2289,10 +2580,11 @@
                             await updateDoc(doc(db, `artifacts/${appId}/users/${onlineOpponentUserId}/profile`, 'data'), { isInGame: false });
                         }
 
-                        showGameEndScreen(statusToShow, gameData.winner, 'online', [...finalGameData.board], finalGameData.moves);
+                        showGameEndScreen(statusToShow, gameData.winner, 'online', [...finalGameData.board], finalGameData.moves, currentOnlineGameMode);
 
                     } else {
                         updateStatus(`Au tour de : ${onlineCurrentTurn}`, 'online');
+                        updateTimerDisplay(); // Ensure display is updated even if no move
                     }
 
                 } else {
@@ -2317,12 +2609,86 @@
             });
         }
 
+        // Function to format time for display
+        function formatTime(ms) {
+            if (ms < 0) return '--:--.--'; // For classic mode or uninitialized
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const hundredths = Math.floor((ms % 1000) / 10); // Get hundredths
+
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${hundredths.toString().padStart(2, '0')}`;
+        }
+
+        // Function to update timer display on UI
+        function updateTimerDisplay() {
+            const playerTime = (currentOnlinePlayerRole === 'X') ? playerXTime : playerOTime;
+            const opponentTime = (currentOnlinePlayerRole === 'X') ? playerOTime : playerXTime;
+
+            playerTimeDisplay.textContent = formatTime(playerTime);
+            opponentTimeDisplay.textContent = formatTime(opponentTime);
+
+            // Update active/low-time classes
+            playerTimeDisplay.classList.toggle('active', onlineGameActive && onlineCurrentTurn === currentOnlinePlayerRole);
+            opponentTimeDisplay.classList.toggle('active', onlineGameActive && onlineCurrentTurn !== currentOnlinePlayerRole);
+
+            playerTimeDisplay.classList.toggle('low-time', playerTime <= 10000 && playerTime > 0); // 10 seconds or less
+            opponentTimeDisplay.classList.toggle('low-time', opponentTime <= 10000 && opponentTime > 0);
+        }
+
+        // Handle timeout
+        async function handleTimeout(timedOutPlayer) {
+            console.log(`Player ${timedOutPlayer} timed out!`);
+            onlineGameActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+
+            const winnerPlayer = (timedOutPlayer === 'X') ? 'O' : 'X';
+            const gameRef = doc(db, 'games', currentOnlineGameId);
+
+            try {
+                await updateDoc(gameRef, {
+                    status: 'timeout', // Custom status for timeout
+                    winner: winnerPlayer,
+                    lastMoveTime: serverTimestamp(),
+                    playerXTime: playerXTime, // Save final times
+                    playerOTime: playerOTime
+                });
+                console.log("Game updated with timeout status.");
+            } catch (error) {
+                console.error("Error updating game for timeout:", error);
+                showMessage("Erreur lors de la mise à jour de la partie (timeout): " + error.message);
+            }
+        }
+
+
         async function handleOnlineCellClick(event) {
             const clickedCellIndex = parseInt(event.target.dataset.index);
 
             if (!onlineGameActive || onlineBoard[clickedCellIndex] !== '' || onlineCurrentTurn !== currentOnlinePlayerRole) {
                 return;
             }
+
+            // If it's a blitz game, check for timeout before processing move
+            if (currentOnlineGameMode === 'blitz') {
+                const now = Date.now();
+                const timeElapsed = now - lastMoveTimestamp;
+
+                if (currentOnlinePlayerRole === 'X') {
+                    playerXTime = Math.max(0, playerXTime - timeElapsed);
+                    if (playerXTime <= 0) {
+                        handleTimeout('X');
+                        return;
+                    }
+                } else { // currentOnlinePlayerRole === 'O'
+                    playerOTime = Math.max(0, playerOTime - timeElapsed);
+                    if (playerOTime <= 0) {
+                        handleTimeout('O');
+                        return;
+                    }
+                }
+            }
+
 
             const newBoard = [...onlineBoard];
             newBoard[clickedCellIndex] = currentOnlinePlayerRole;
@@ -2343,14 +2709,22 @@
             }
 
             try {
-                await updateDoc(doc(db, 'games', currentOnlineGameId), {
+                const updateData = {
                     board: newBoard,
                     currentPlayer: nextPlayer,
                     status: gameStatus,
                     winner: winner,
                     lastMoveTime: serverTimestamp(),
                     moves: arrayUnion({ index: clickedCellIndex, player: currentOnlinePlayerRole }) // Add move to history
-                });
+                };
+
+                // Only update player times in Firestore if it's a blitz game
+                if (currentOnlineGameMode === 'blitz') {
+                    updateData.playerXTime = (currentOnlinePlayerRole === 'X') ? playerXTime : playerXTime; // Player X's remaining time
+                    updateData.playerOTime = (currentOnlinePlayerRole === 'O') ? playerOTime : playerOTime; // Player O's remaining time
+                }
+
+                await updateDoc(doc(db, 'games', currentOnlineGameId), updateData);
                 console.log("Firestore mis à jour avec le mouvement.");
             } catch (error) {
                 console.error("Erreur lors de l'envoi du mouvement:", error);
@@ -2372,7 +2746,9 @@
             onlineCurrentTurn = 'X';
             onlineGameActive = true;
             resetOnlineBoardUI();
-            findOnlineMatch(); // Start a new matchmaking search
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+            findOnlineMatch(currentOnlineGameMode); // Start a new matchmaking search with the same mode
         }
 
         async function leaveOnlineGame() {
@@ -2380,6 +2756,11 @@
                 onlineGameListenerUnsubscribe();
                 onlineGameListenerUnsubscribe = null;
             }
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
             if (currentOnlineGameId && db) {
                 try {
                     const gameDoc = await getDoc(doc(db, 'games', currentOnlineGameId));
@@ -2392,7 +2773,7 @@
                         });
                         console.log("Partie en ligne marquée comme abandonnée.");
                         // Update current user's stats for a loss
-                        updateUserProfileStats(currentUserId, 'loss', onlineOpponentProfile ? onlineOpponentProfile.elo : null);
+                        updateUserProfileStats(currentUserId, 'loss', currentOnlineGameMode, onlineOpponentProfile ? (currentOnlineGameMode === 'classic' ? onlineOpponentProfile.eloClassic : onlineOpponentProfile.eloBlitz) : null);
                     }
                 } catch (error) {
                     console.error("Erreur lors de la tentative d'abandon de partie:", error);
@@ -2416,6 +2797,7 @@
             onlineGameActive = false;
             onlineBoard = Array(25).fill('');
             onlineCurrentTurn = 'X';
+            currentOnlineGameMode = 'classic'; // Reset to default
 
             hideAllScreens();
             homeScreen.classList.remove('hidden');
@@ -2426,7 +2808,7 @@
 
 
         // --- Fonctions de gestion du classement ---
-        async function fetchLeaderboard() {
+        async function fetchLeaderboard(mode) {
             if (!db || !isAuthReady) {
                 leaderboardList.innerHTML = '<div class="text-center p-4 text-red-500">Erreur: Impossible de charger le classement. Firebase non prêt.</div>';
                 return;
@@ -2440,6 +2822,7 @@
                 console.log("Firebase: Nombre de documents parents utilisateur trouvés :", usersSnapshot.docs.length);
 
                 const users = [];
+                const eloField = `elo${mode.charAt(0).toUpperCase() + mode.slice(1)}`; // 'eloClassic' or 'eloBlitz'
 
                 for (const userDoc of usersSnapshot.docs) {
                     const profileDocRef = doc(userDoc.ref, 'profile', 'data');
@@ -2450,14 +2833,14 @@
                         users.push({
                             id: userDoc.id,
                             username: profileData.username || 'Joueur Inconnu',
-                            elo: profileData.elo || 0
+                            elo: profileData[eloField] || 0 // Use the correct Elo field
                         });
                     }
                 }
 
                 users.sort((a, b) => b.elo - a.elo); // Sort by Elo descending
 
-                displayLeaderboard(users);
+                displayLeaderboard(users, mode);
 
             } catch (error) {
                 console.error("Erreur lors de la récupération du classement:", error);
@@ -2466,7 +2849,8 @@
             }
         }
 
-        function displayLeaderboard(users) {
+        // Modified displayLeaderboard to accept mode
+        function displayLeaderboard(users, mode) {
             leaderboardList.innerHTML = '';
 
             if (users.length === 0) {
@@ -2489,24 +2873,30 @@
                 listItem.innerHTML = `
                     <span class="rank">${rank}.</span>
                     <span class="username">${user.username}</span>
-                    <span class="elo">${user.elo} Elo</span>
+                    <span class="elo">${user.elo} Elo (${mode.charAt(0).toUpperCase() + mode.slice(1)})</span>
                 `;
                 listItem.addEventListener('click', () => showUserProfileModal(user.id));
                 leaderboardList.appendChild(listItem);
             });
+
+            // Update toggle button active state
+            document.getElementById('leaderboard-toggle-classic').classList.remove('active');
+            document.getElementById('leaderboard-toggle-blitz').classList.remove('active');
+            document.getElementById(`leaderboard-toggle-${mode}`).classList.add('active');
         }
 
         function showLeaderboardScreen() {
             hideAllScreens();
             leaderboardScreen.classList.remove('hidden');
-            fetchLeaderboard();
+            fetchLeaderboard(currentLeaderboardDisplayMode); // Fetch based on current mode
         }
 
         // --- Fonctions de gestion de l'historique des parties ---
         const HISTORY_STORAGE_KEY = 'oxoArenaGameHistory';
         const MAX_HISTORY_ITEMS = 10;
 
-        function saveGameToHistory(mode, finalStatus, opponent, finalBoardState, movesHistory, boardSize, gameId = null) {
+        // Modified saveGameToHistory to store gameMode
+        function saveGameToHistory(mode, finalStatus, opponent, finalBoardState, movesHistory, boardSize, gameId = null, gameMode = 'classic') {
             let history = JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY) || '[]');
 
             // Prevent duplicate entries for online games if they are already saved by the listener
@@ -2519,7 +2909,8 @@
 
             const newGame = {
                 id: gameId || Date.now().toString(), // Use gameId for online, timestamp for local/AI
-                mode: mode,
+                mode: mode, // 'local', 'ai', 'online'
+                gameMode: gameMode, // 'classic' or 'blitz' (only relevant for online)
                 date: new Date().toLocaleString(),
                 opponent: opponent,
                 status: finalStatus,
@@ -2569,12 +2960,18 @@
                     statusText = 'Nul';
                 }
 
+                let gameModeDisplay = '';
+                if (game.mode === 'online') {
+                    gameModeDisplay = ` (${game.gameMode.charAt(0).toUpperCase() + game.gameMode.slice(1)})`;
+                }
+
+
                 gameItem.innerHTML = `
                     <div class="w-full flex justify-between items-center">
                         <span class="text-sm text-gray-500">${game.date}</span>
                         <span class="font-semibold ${statusClass}">${statusText}</span>
                     </div>
-                    <div class="text-lg font-medium text-gray-800">Mode: ${game.mode === 'local' ? 'Local' : (game.mode === 'ai' ? 'Vs IA' : 'En ligne')}</div>
+                    <div class="text-lg font-medium text-gray-800">Mode: ${game.mode === 'local' ? 'Local' : (game.mode === 'ai' ? 'Vs IA' : 'En ligne')}${gameModeDisplay}</div>
                     <div class="text-md text-gray-700">Adversaire: ${game.opponent}</div>
                     <div class="w-full flex justify-center mt-2">
                         ${createMiniBoardHTML(game.finalBoard, game.boardSize)}
@@ -2613,7 +3010,12 @@
             hideAllScreens();
             historyDetailScreen.classList.remove('hidden');
 
-            document.getElementById('detail-mode').textContent = gameData.mode === 'local' ? 'Local' : (gameData.mode === 'ai' ? 'Vs IA' : 'En ligne');
+            let gameModeDisplay = '';
+            if (gameData.mode === 'online') {
+                gameModeDisplay = ` (${gameData.gameMode.charAt(0).toUpperCase() + gameData.gameMode.slice(1)})`;
+            }
+
+            document.getElementById('detail-mode').textContent = `${gameData.mode === 'local' ? 'Local' : (gameData.mode === 'ai' ? 'Vs IA' : 'En ligne')}${gameModeDisplay}`;
             document.getElementById('detail-date').textContent = gameData.date;
             document.getElementById('detail-opponent').textContent = gameData.opponent;
             let statusText = '';
@@ -2659,6 +3061,7 @@
             homeScreen.classList.add('hidden');
             localGameScreen.classList.add('hidden');
             aiGameScreen.classList.add('hidden');
+            onlinePlaySelectionScreen.classList.add('hidden'); // NEW
             onlineSearchingScreen.classList.add('hidden');
             onlineGameScreen.classList.add('hidden');
             gameEndOverlay.classList.add('hidden');
@@ -2726,12 +3129,13 @@
             // Update modal content
             modalProfileUsername.textContent = targetProfile.username || 'Inconnu';
             modalProfileId.textContent = targetUserId;
-            modalProfileElo.textContent = targetProfile.elo || 0;
+            modalProfileEloClassic.textContent = targetProfile.eloClassic || 0; // Display classic Elo
+            modalProfileEloBlitz.textContent = targetProfile.eloBlitz || 0;     // Display blitz Elo
             modalProfileLevel.textContent = `${targetProfile.level || 0}/${MAX_LEVEL}`;
-            modalProfileGamesPlayed.textContent = targetProfile.gamesPlayed || 0;
-            modalProfileWins.textContent = targetProfile.wins || 0;
-            modalProfileLosses.textContent = targetProfile.losses || 0;
-            modalProfileDraws.textContent = targetProfile.draws || 0;
+            modalProfileGamesPlayed.textContent = targetProfile.gamesPlayedClassic || 0; // Default to classic stats for modal
+            modalProfileWins.textContent = targetProfile.winsClassic || 0;
+            modalProfileLosses.textContent = targetProfile.lossesClassic || 0;
+            modalProfileDraws.textContent = targetProfile.drawsClassic || 0;
 
             // Display last online status
             if (targetProfile.lastOnline && targetProfile.lastOnline instanceof Object && 'toDate' in targetProfile.lastOnline) {
@@ -3261,7 +3665,8 @@
                                 id: docSnap.id,
                                 senderId: data.senderId,
                                 senderUsername: senderProfile.username,
-                                type: 'game_invite'
+                                type: 'game_invite',
+                                gameMode: data.gameMode || 'classic' // Get game mode from invite
                             });
                         }
                     }
@@ -3325,20 +3730,20 @@
                 const item = document.createElement('div');
                 item.classList.add('notification-item');
                 item.innerHTML = `
-                    <span>Invitation de partie de <span class="font-semibold">${proposal.senderUsername}</span></span>
+                    <span>Invitation de partie ${proposal.gameMode === 'blitz' ? 'Blitz' : 'Classique'} de <span class="font-semibold">${proposal.senderUsername}</span></span>
                     <div class="actions">
-                        <button class="accept-button bg-purple-600 hover:bg-purple-700" data-invite-id="${proposal.id}" data-sender-id="${proposal.senderId}">Accepter</button>
+                        <button class="accept-button bg-purple-600 hover:bg-purple-700" data-invite-id="${proposal.id}" data-sender-id="${proposal.senderId}" data-game-mode="${proposal.gameMode}">Accepter</button>
                         <button class="decline-button" data-invite-id="${proposal.id}">Refuser</button>
                     </div>
                 `;
-                item.querySelector('.accept-button').addEventListener('click', () => acceptGameInvitation(proposal.id, proposal.senderId));
+                item.querySelector('.accept-button').addEventListener('click', () => acceptGameInvitation(proposal.id, proposal.senderId, proposal.gameMode));
                 item.querySelector('.decline-button').addEventListener('click', () => declineGameInvitation(proposal.id));
                 notificationList.appendChild(item);
             });
         }
 
         // Game Invitation Logic
-        async function sendGameInvitation(receiverId, receiverUsername) {
+        async function sendGameInvitation(receiverId, receiverUsername, gameMode = 'classic') {
             if (!db || !currentUserId || !isAuthReady || !userProfileData) {
                 showMessage("Erreur: Firebase non prêt ou utilisateur non connecté.");
                 return;
@@ -3360,32 +3765,34 @@
             }
 
             try {
-                // Check if a pending invitation already exists from sender to receiver
+                // Check if a pending invitation already exists from sender to receiver for this mode
                 const existingInviteQuery = query(
                     collection(db, "game_invites"),
                     where("senderId", "==", currentUserId),
                     where("receiverId", "==", receiverId),
-                    where("status", "==", "pending")
+                    where("status", "==", "pending"),
+                    where("gameMode", "==", gameMode) // Check for specific game mode
                 );
                 const existingInviteSnapshot = await getDocs(existingInviteQuery);
 
                 if (!existingInviteSnapshot.empty) {
-                    showMessage(`Vous avez déjà envoyé une invitation à ${receiverUsername}.`);
+                    showMessage(`Vous avez déjà envoyé une invitation ${gameMode === 'blitz' ? 'Blitz' : 'Classique'} à ${receiverUsername}.`);
                     userProfileModalOverlay.classList.add('hidden');
                     return;
                 }
 
-                // Check if a pending invitation already exists from receiver to sender
+                // Check if a pending invitation already exists from receiver to sender for this mode
                 const reverseInviteQuery = query(
                     collection(db, "game_invites"),
                     where("senderId", "==", receiverId),
                     where("receiverId", "==", currentUserId),
-                    where("status", "==", "pending")
+                    where("status", "==", "pending"),
+                    where("gameMode", "==", gameMode) // Check for specific game mode
                 );
                 const reverseInviteSnapshot = await getDocs(reverseInviteQuery);
 
                 if (!reverseInviteSnapshot.empty) {
-                    showMessage(`${receiverUsername} vous a déjà envoyé une invitation. Vérifiez vos notifications.`);
+                    showMessage(`${receiverUsername} vous a déjà envoyé une invitation ${gameMode === 'blitz' ? 'Blitz' : 'Classique'}. Vérifiez vos notifications.`);
                     userProfileModalOverlay.classList.add('hidden');
                     return;
                 }
@@ -3398,10 +3805,11 @@
                     receiverUsername: receiverUsername,
                     status: "pending",
                     timestamp: serverTimestamp(),
-                    gameId: null // Initialize gameId as null
+                    gameId: null, // Initialize gameId as null
+                    gameMode: gameMode // Store game mode
                 });
 
-                showMessage(`Invitation de partie envoyée à ${receiverUsername} ! En attente de réponse...`);
+                showMessage(`Invitation de partie ${gameMode === 'blitz' ? 'Blitz' : 'Classique'} envoyée à ${receiverUsername} ! En attente de réponse...`);
                 userProfileModalOverlay.classList.add('hidden');
 
                 // Set isInGame to true for the sender immediately after sending the invite
@@ -3422,7 +3830,7 @@
                                 currentSentInviteListenerUnsubscribe = null;
                             }
                             // Start game for the sender (Comte 1) as Player X, opponent is receiver (Comte 2)
-                            startGameOnline(inviteData.gameId, 'X', inviteData.receiverId);
+                            startGameOnline(inviteData.gameId, 'X', inviteData.receiverId, inviteData.gameMode);
                         } else if (inviteData.status === 'declined') {
                             console.log("Sent invite declined.");
                             if (currentSentInviteListenerUnsubscribe) {
@@ -3466,12 +3874,13 @@
         function showGameInviteModal(invite) {
             currentIncomingGameInvite = invite;
             gameInviteTitle.textContent = "Invitation de Partie";
-            gameInviteMessage.textContent = `${invite.senderUsername} vous propose une partie !`;
+            gameInviteMessage.textContent = `${invite.senderUsername} vous propose une partie ${invite.gameMode === 'blitz' ? 'Blitz' : 'Classique'} !`;
             gameInviteStatusMessage.classList.add('hidden'); // Hide any previous status message
             gameInviteModalOverlay.classList.remove('hidden');
         }
 
-        async function acceptGameInvitation(inviteId, senderId) {
+        // Modified acceptGameInvitation to pass gameMode
+        async function acceptGameInvitation(inviteId, senderId, gameMode) {
             if (!db || !currentUserId || !isAuthReady || !userProfileData) {
                 showMessage("Erreur: Firebase non prêt ou utilisateur non connecté.");
                 return;
@@ -3506,7 +3915,7 @@
                 const playerXId = senderId;
                 const playerOId = currentUserId;
 
-                await setDoc(gameRef, {
+                const gameDataToSet = {
                     playerXId: playerXId,
                     playerOId: playerOId,
                     board: Array(25).fill(''),
@@ -3515,8 +3924,17 @@
                     winner: null,
                     createdAt: serverTimestamp(),
                     lastMoveTime: serverTimestamp(),
-                    moves: []
-                });
+                    moves: [],
+                    gameMode: gameMode // Store game mode
+                };
+
+                // Add initial times for blitz games
+                if (gameMode === 'blitz') {
+                    gameDataToSet.playerXTime = BLITZ_TIME_LIMIT_MS;
+                    gameDataToSet.playerOTime = BLITZ_TIME_LIMIT_MS;
+                }
+
+                await setDoc(gameRef, gameDataToSet);
 
                 // Update invite status to accepted AND add gameId
                 await updateDoc(inviteRef, { status: "accepted", gameId: gameId, timestamp: serverTimestamp() });
@@ -3527,7 +3945,7 @@
 
                 showMessage("Invitation acceptée ! Démarrage de la partie...", () => {
                     gameInviteModalOverlay.classList.add('hidden');
-                    startGameOnline(gameId, 'O', senderId); // Current user is O in this case
+                    startGameOnline(gameId, 'O', senderId, gameMode); // Current user is O in this case
                 });
 
             } catch (error) {
@@ -3639,7 +4057,7 @@
                 cancelUsernameButton.addEventListener('click', cancelUsernameEdit);
             }
 
-            // Play Online button
+            // Play Online button now shows online mode selection screen
             if (playOnlineButton) {
                 playOnlineButton.addEventListener('click', function() {
                     if (isAuthReady && currentUserId) {
@@ -3648,21 +4066,43 @@
                             showMessage("Vous êtes déjà en partie. Quittez votre partie actuelle avant de chercher un match.");
                             return;
                         }
-                        findOnlineMatch();
+                        hideAllScreens();
+                        onlinePlaySelectionScreen.classList.remove('hidden');
                     } else {
                         showMessage("Veuillez patienter, la connexion à Firebase est en cours...", () => {
                             // Retry after message box is closed
                             if (isAuthReady && currentUserId) {
-                                // Check again after message box closes
                                 if (userProfileData && userProfileData.isInGame) {
                                     showMessage("Vous êtes déjà en partie. Quittez votre partie actuelle avant de chercher un match.");
                                     return;
                                 }
-                                findOnlineMatch();
+                                hideAllScreens();
+                                onlinePlaySelectionScreen.classList.remove('hidden');
                             } else {
                                 showMessage("Impossible de se connecter à Firebase. Veuillez vérifier votre connexion.");
                             }
                         });
+                    }
+                });
+            }
+
+            // NEW: Online Mode Selection Buttons
+            if (selectClassicOnlineButton) {
+                selectClassicOnlineButton.addEventListener('click', () => {
+                    findOnlineMatch('classic');
+                });
+            }
+            if (selectBlitzOnlineButton) {
+                selectBlitzOnlineButton.addEventListener('click', () => {
+                    findOnlineMatch('blitz');
+                });
+            }
+            if (onlineSelectionBackToHomeButton) {
+                onlineSelectionBackToHomeButton.addEventListener('click', () => {
+                    hideAllScreens();
+                    homeScreen.classList.remove('hidden');
+                    if (isAuthReady && currentUserId) {
+                        fetchUserProfile(currentUserId).then(profile => displayUserProfile(currentUserId, profile));
                     }
                 });
             }
@@ -3686,7 +4126,7 @@
                 } else if (currentEndGameType === 'ai') {
                     resetAIGame();
                 } else if (currentEndGameType === 'online') {
-                    resetOnlineGame();
+                    resetOnlineGame(); // This will re-trigger matchmaking for the same mode
                 }
             });
 
@@ -3856,7 +4296,24 @@
             unblockUserButton.addEventListener('click', () => unblockUser(modalProfileId.textContent));
 
             // Propose Game Button Listener
-            proposeGameButton.addEventListener('click', () => sendGameInvitation(modalProfileId.textContent, modalProfileUsername.textContent));
+            // This button should now also allow choosing game mode
+            proposeGameButton.addEventListener('click', async () => {
+                // For simplicity, let's assume "Proposer Partie" always proposes a classic game for now.
+                // If you want to add mode selection here, we'd need another small modal.
+                // For now, it will propose a classic game.
+                const targetUserId = modalProfileId.textContent;
+                const targetUsername = modalProfileUsername.textContent;
+                showMessage(`Voulez-vous proposer une partie Classique ou Blitz à ${targetUsername}?`, () => {
+                    // This is a placeholder for a choice. For now, let's just propose classic.
+                    // In a real app, you'd show a modal with two buttons "Classique" and "Blitz"
+                    // and then call sendGameInvitation with the chosen mode.
+                    // For this iteration, I'll just send a classic invite.
+                    sendGameInvitation(targetUserId, targetUsername, 'classic'); // Default to classic
+                });
+                // To implement a choice, you'd need to create a new small modal here
+                // with two buttons, "Classique" and "Blitz", each calling sendGameInvitation
+                // with the appropriate mode.
+            });
 
             // Notification Modal Actions
             notificationButton.addEventListener('click', showNotificationModal);
@@ -3867,9 +4324,12 @@
                 gameInviteModalOverlay.classList.add('hidden');
                 currentIncomingGameInvite = null; // Clear the active invite
             });
+            // acceptGameInviteButton and declineGameInviteButton listeners are now set up in renderNotifications
+            // for dynamic buttons, but also need to be here for the direct modal.
+            // Ensure they pass the game mode.
             acceptGameInviteButton.addEventListener('click', () => {
                 if (currentIncomingGameInvite) {
-                    acceptGameInvitation(currentIncomingGameInvite.id, currentIncomingGameInvite.senderId);
+                    acceptGameInvitation(currentIncomingGameInvite.id, currentIncomingGameInvite.senderId, currentIncomingGameInvite.gameMode);
                 }
             });
             declineGameInviteButton.addEventListener('click', () => {
@@ -3878,9 +4338,38 @@
                 }
             });
 
+
             // Share App Button Listener
             if (shareAppButton) {
                 shareAppButton.addEventListener('click', shareApp);
+            }
+
+            // Stats Toggle Buttons
+            if (statsToggleClassic) {
+                statsToggleClassic.addEventListener('click', () => {
+                    currentStatsDisplayMode = 'classic';
+                    updateDisplayedStats('classic');
+                });
+            }
+            if (statsToggleBlitz) {
+                statsToggleBlitz.addEventListener('click', () => {
+                    currentStatsDisplayMode = 'blitz';
+                    updateDisplayedStats('blitz');
+                });
+            }
+
+            // Leaderboard Toggle Buttons
+            if (leaderboardToggleClassic) {
+                leaderboardToggleClassic.addEventListener('click', () => {
+                    currentLeaderboardDisplayMode = 'classic';
+                    fetchLeaderboard('classic');
+                });
+            }
+            if (leaderboardToggleBlitz) {
+                leaderboardToggleBlitz.addEventListener('click', () => {
+                    currentLeaderboardDisplayMode = 'blitz';
+                    fetchLeaderboard('blitz');
+                });
             }
         });
     </script>
