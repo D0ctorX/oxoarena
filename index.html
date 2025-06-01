@@ -728,7 +728,7 @@
         <div id="ai-game-screen" class="hidden bg-white rounded-xl shadow-2xl p-6 md:p-10 flex flex-col items-center max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
             <h1 class="text-4xl font-extrabold mb-4 text-center text-[#1A2B3C]">OXO Arena - Contre IA</h1>
             <p class="text-center text-gray-600 mb-6 italic">
-                Les parties jouées contre l'IA en mode Facile et Moyen n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.). Seules les parties en mode Difficile sont prises en compte.
+                Les parties jouées contre l'IA n'impactent pas vos statistiques (Elo, niveau, nombre de parties, etc.).
             </p>
             <div id="ai-difficulty-buttons" class="flex flex-wrap justify-center gap-4 mb-8">
                 <button id="easy-button" class="game-button">Facile</button>
@@ -1894,14 +1894,10 @@
             gameEndTitle.textContent = title;
             gameEndMessage.textContent = message;
 
-            // Update user stats for online games and hard AI games
-            if (isAuthReady && currentUserId) {
-                if (gameType === 'ai' && aiDifficulty === 'hard') {
-                    updateUserProfileStats(currentUserId, status, 'classic'); // AI hard is classic mode
-                } else if (gameType === 'online') {
-                    // Pass the actual gameMode to updateUserProfileStats
-                    updateUserProfileStats(currentUserId, status, currentOnlineGameMode, onlineOpponentProfile ? (currentOnlineGameMode === 'classic' ? onlineOpponentProfile.eloClassic : onlineOpponentProfile.eloBlitz) : null);
-                }
+            // Update user stats for online games ONLY. AI games no longer impact stats.
+            if (isAuthReady && currentUserId && gameType === 'online') {
+                // Pass the actual gameMode to updateUserProfileStats
+                updateUserProfileStats(currentUserId, status, currentOnlineGameMode, onlineOpponentProfile ? (currentOnlineGameMode === 'classic' ? onlineOpponentProfile.eloClassic : onlineOpponentProfile.eloBlitz) : null);
             }
 
             saveGameToHistory(gameType, historyStatus, currentOpponentName, finalBoardState, movesHistory, BOARD_SIZE, currentOnlineGameId, currentOnlineGameMode);
@@ -2135,7 +2131,7 @@
             const corners = [0, 4, 20, 24];
             const availableCorners = corners.filter(index => currentBoard[index] === '');
             if (availableCorners.length > 0) {
-                const randomIndex = Math.floor(Math.random() * availableCorners.length);
+                const randomIndex = Math.floor(Math.random() * availableCells.length); // Fixed: should be availableCorners
                 return availableCorners[randomIndex];
             }
 
@@ -2862,7 +2858,7 @@
             }
         }
 
-        // Modified displayLeaderboard to accept mode
+        // Modified displayLeaderboard to remove mode from Elo display
         function displayLeaderboard(users, mode) {
             leaderboardList.innerHTML = '';
 
@@ -2886,8 +2882,7 @@
                 listItem.innerHTML = `
                     <span class="rank">${rank}.</span>
                     <span class="username">${user.username}</span>
-                    <span class="elo">${user.elo} Elo (${mode.charAt(0).toUpperCase() + mode.slice(1)})</span>
-                `;
+                    <span class="elo">${user.elo} Elo</span> `;
                 listItem.addEventListener('click', () => showUserProfileModal(user.id));
                 leaderboardList.appendChild(listItem);
             });
